@@ -551,6 +551,13 @@ body[data-screen]:not([data-screen="home"]) .top .chip{padding:4px 10px;font-siz
 kbd{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 5px;margin:0 2px;border-radius:6px;font:700 12px/1 var(--f-body);color:#6b4a1f;background:#fff;border:1px solid rgba(150,105,45,.35);box-shadow:0 2px 0 rgba(150,105,45,.3);vertical-align:2px}
 .opt kbd{margin-right:10px;flex-shrink:0}
 @media (hover:none){.opt kbd{display:none}}
+.acccard{gap:12px}
+.acctip{margin:0;font-size:14px;line-height:1.7;color:var(--muted)}
+.fld{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:6px;font-size:13px;font-weight:700;color:#6b4a1f;text-align:left}
+.fld input{width:100%;box-sizing:border-box;font:600 20px/1.4 var(--f-body);letter-spacing:.08em;color:var(--ink);background:#fff;border:1px solid var(--hair);border-radius:14px;padding:12px 14px;box-shadow:inset 0 2px 4px rgba(120,80,30,.08)}
+.fld input:focus{outline:none;border-color:#e0a54e;box-shadow:0 0 0 3px rgba(224,165,78,.25)}
+.acccard .msg{min-height:1.2em;margin:0}
+.chip.acc.on{background:linear-gradient(180deg,#fff5e0,#ffe7bd);color:#7a4a1c}
 /* 训练模式切换 */
 .modesw{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modesw button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 14px;border-radius:18px;background:linear-gradient(180deg,#fff,#fff6e4);border:2px solid var(--creamEdge);box-shadow:0 4px 0 var(--creamShadow);color:var(--ink)}
@@ -642,6 +649,15 @@ body[data-screen="board"] #skyfx,body[data-screen="import"] #skyfx,body[data-scr
 </style>
 <div id="skyfx" aria-hidden="true"><div class="sun"></div><div class="cl c1"></div><div class="cl c2"></div><div class="cl c3"></div><div class="hill"></div></div>
 <div id="warmfx" aria-hidden="true"></div>
+<div class="lvstart" id="accBox" hidden><form class="lvcard acccard" id="accForm" autocomplete="on" novalidate>
+  <div class="lvrib">登　录</div>
+  <p class="acctip">用老师发给你的账号和密码登录，<br>进度、练习时长和测验成绩会保存下来。</p>
+  <label class="fld" for="accUser">账号<input id="accUser" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="例如 km01" maxlength="6"></label>
+  <label class="fld" for="accPw">密码<input id="accPw" name="password" type="password" inputmode="numeric" autocomplete="current-password" placeholder="6 位数字" maxlength="12"></label>
+  <p class="msg err" id="accMsg" role="alert"></p>
+  <button class="btn big" id="accGo" type="submit">登录</button>
+  <button class="chip" id="accGuest" type="button">先当游客玩（进度只存在这台设备）</button>
+</form></div>
 <canvas id="fx"></canvas>
 <div id="flash"></div><div id="praise"></div>
 <div class="wrap">
@@ -656,7 +672,7 @@ body[data-screen="board"] #skyfx,body[data-screen="import"] #skyfx,body[data-scr
     </div>
     <div class="row">
       <label class="nameBox" for="nick">玩家<input id="nick" maxlength="12" placeholder="写下你的名字"></label>
-      <button class="chip" id="soundBtn">声音：开</button>
+      <button class="chip acc" id="accBtn" type="button">登录</button><button class="chip" id="soundBtn">声音：开</button>
       <button class="chip" id="homeBtn" hidden>回到首页</button>
     </div>
   </div>
@@ -673,7 +689,7 @@ body[data-screen="board"] #skyfx,body[data-screen="import"] #skyfx,body[data-scr
       <button class="pillar p-test" id="goTest"><svg class="art" viewBox="0 0 112 112" aria-hidden="true"><rect x="48" y="10" width="16" height="12" rx="4" fill="#fff"/><circle cx="56" cy="62" r="38" fill="#fff" stroke="#e6f4ff" stroke-width="5"/><circle cx="56" cy="62" r="28" fill="#eaf6ff"/><path d="M56 62V40" stroke="#1f78c9" stroke-width="6" stroke-linecap="round"/><path d="M56 62l14 8" stroke="#1f78c9" stroke-width="5" stroke-linecap="round"/><path d="M88 18L74 46h12l-8 24 22-32H88l8-20z" fill="#ffd257" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg><span class="s" id="testStat"></span><span class="n">测试</span><span class="d">60 秒快问快答</span></button>
       <button class="pillar p-duel" id="goDuel"><svg class="art" viewBox="0 0 112 112" aria-hidden="true"><path d="M28 100L66 20" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="M84 100L46 20" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="M64 24l30 6-12 12 10 14-34-6z" fill="#ff9a2e" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M48 24l-30 6 12 12-10 14 34-6z" fill="#3e9cf0" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M56 70l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#ffd257" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span class="s">两队同屏</span><span class="n">对战</span><span class="d">同题抢答 · 拼句赛跑</span></button>
     </div>
-    <div class="row center"><button class="chip" id="goBoard">心版榜</button><button class="chip" id="goImport">导入经文库</button><button class="chip" id="goTeacher" hidden>老师后台</button></div>
+    <div class="row center"><button class="chip" id="goBoard">心版榜</button><a class="chip" href="teacher.html" style="text-decoration:none">老师后台</a><button class="chip" id="goImport">导入经文库</button><button class="chip" id="goTeacher" hidden>老师后台</button></div>
   </section>
 
   <section class="screen" id="map" hidden>
@@ -798,7 +814,7 @@ function overlap(x,v){if(x.book!==v.book)return false;const a=span(x),b=span(v);
 function refOpts(v){const ok=x=>x!==v&&x.full!==v.full&&!overlap(x,v);
   let c=shuffle(LIB.filter(ok));if(c.length<3)c=c.concat(shuffle(ALL.filter(x=>ok(x)&&x.book===v.book)),shuffle(ALL.filter(ok)));
   return shuffle([v.full,...uniq(c.map(x=>x.full)).slice(0,3)])}
-const nick=()=>($("#nick").value.trim()||"无名玩家").slice(0,12);
+const nick=()=>(ACC.tok?ACC.name:($("#nick").value.trim()||"无名玩家")).slice(0,12);
 
 const fc=$("#fx"),fxx=fc.getContext("2d");let parts=[],fxOn=false;
 function sizeFx(){fc.width=innerWidth*devicePixelRatio;fc.height=innerHeight*devicePixelRatio}addEventListener("resize",sizeFx);sizeFx();
@@ -1070,7 +1086,7 @@ function finishLevel(){M.done=true;
   const stars=M.miss<=2?3:M.miss<=5?2:1,u=M.u,prev=MEM[u.key]||0;MEM[u.key]=Math.max(prev,stars);
   if(M.mode==="adv"){ADV[u.key]=Math.max(ADV[u.key]||0,stars);store.set("xb-adv",ADV)}
   if(u.seg!=null){const g=segsOf(u.v);if(g.every((_,i)=>MEM[segKey(u.v,i)]))MEM[u.v.ref]=Math.min(...g.map((_,i)=>MEM[segKey(u.v,i)]))}
-  store.set("xb4-mem",MEM);pushClass();pushProgress();
+  store.set("xb4-mem",MEM);pushClass();pushProgress();cloudProgress([u.key,u.v.ref]);
   const i=M.i,nx=i+1<UNITS.length?i+1:-1;
   $("#resBox").innerHTML=`<h2>第 ${i+1} 关　过关！</h2>
     <div class="bigstars anim">${[1,2,3].map(k=>`<span class="${k<=stars?"lit":""}" style="animation-delay:${.25+k*.3}s">★</span>`).join("")}</div>
@@ -1154,7 +1170,7 @@ function nextQ(){
   box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(T.busy)return;const ok=b.textContent===q.ans;
     b.classList.add(ok?"right":"wrong");if(ok)burstEl(b,16);else{b.classList.add("shake");box.querySelectorAll(".opt").forEach(x=>{if(x.textContent===q.ans)x.classList.add("right")})}answer(ok,q)})}
 function endTest(){
-  stopNow();stopNow=()=>{};const nb=T.score>TBEST;TBEST=Math.max(TBEST,T.score);store.set("xb4-tbest",TBEST);
+  stopNow();stopNow=()=>{};const nb=T.score>TBEST;TBEST=Math.max(TBEST,T.score);store.set("xb4-tbest",TBEST);cloudTest({s:T.score,c:T.right,w:T.wrong,b:T.best,p:packTitle(PACK)});
   LOCALB.push({name:nick(),score:T.score,t:Date.now()});LOCALB.sort((a,b)=>b.score-a.score);LOCALB=LOCALB.slice(0,60);store.set("xb4-local",LOCALB);pushClass();
   document.body.classList.remove("hurry");const acc=T.right+T.wrong?Math.round(T.right/(T.right+T.wrong)*100):0,miss=[...T.missed.values()];
   $("#resBox").innerHTML=`<h2>${nb&&T.score?"新纪录！":"时间到"}</h2>
@@ -1247,8 +1263,59 @@ $("#importDo").onclick=()=>{const raw=parseLib($("#importText").value),m=$("#imp
   m.className="msg ok";m.textContent=`已导入 ${raw.length} 节经文，首页已切换到“我导入的”经文包。`+(bare.length?`　${bare.join("、")} 没有标挖空词，会改用整句出题。`:"")};
 $("#importSample").onclick=()=>{store.set("xb5-custom",[]);buildAll();if(PACK.kind==="custom")setPack({kind:"book",key:"约翰福音"});const m=$("#importMsg");m.className="msg ok";m.textContent="已清除。"};
 
+/* ===== 学生账号（Supabase）：登录、进度和测验上传、每日练习时长 ===== */
+const SB_URL="https://ndaliuqndcongzdaekgu.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWxpdXFuZGNvbmd6ZGFla2d1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTg5MDIsImV4cCI6MjEwOTM3NDkwMn0.W6gYi-pRe7bM5adLl0YpwtqJq9lSQ0OnextINsOGrr8";
+const ACC={tok:store.get("xb-tok",null),name:store.get("xb-name",""),user:store.get("xb-user",""),cls:store.get("xb-cls",""),guest:store.get("xb-guest",false)};
+let Q=store.get("xb-q",{p:{},t:[],sec:0});const saveQ=()=>store.set("xb-q",Q);
+async function rpc(fn,args,keep){const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",keepalive:!!keep,headers:{apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(args||{})});
+  const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){const e=new Error((d&&d.message)||("HTTP "+r.status));e.code=(d&&d.message)||"";throw e}return d}
+function accSave(){store.set("xb-tok",ACC.tok);store.set("xb-name",ACC.name);store.set("xb-user",ACC.user);store.set("xb-cls",ACC.cls);store.set("xb-guest",ACC.guest)}
+function drawAcc(){const b=$("#accBtn");b.textContent=ACC.tok?`${ACC.name} · 退出`:"登录";b.classList.toggle("on",!!ACC.tok);
+  const nb=document.querySelector(".nameBox");if(nb)nb.hidden=!!ACC.tok}
+function showLogin(msg){$("#accBox").hidden=false;$("#accMsg").textContent=msg||"";setTimeout(()=>{try{$("#accUser").focus({preventScroll:true})}catch(e){}},60)}
+function resetLocal(){MEM={};ADV={};TBEST=0;LOCALB=[];Q={p:{},t:[],sec:0};store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",0);store.set("xb4-local",[]);saveQ()}
+function sessionGone(){ACC.tok=null;accSave();drawAcc();showLogin("登录已过期，请重新登录。")}
+async function flushQ(){if(!ACC.tok||flushQ.busy)return;flushQ.busy=true;
+  try{const items=Object.entries(Q.p).map(([k,v])=>({k,s:v[0],a:v[1]}));
+    if(items.length){await rpc("student_save_progress",{p_token:ACC.tok,p_items:items});Q.p={};saveQ()}
+    while(Q.t.length){const x=Q.t[0];await rpc("student_save_test",{p_token:ACC.tok,p_score:x.s,p_correct:x.c,p_wrong:x.w,p_combo:x.b,p_pack:x.p});Q.t.shift();saveQ()}
+    if(Q.sec>0){const n=Math.min(Q.sec,120);await rpc("student_heartbeat",{p_token:ACC.tok,p_seconds:n});Q.sec-=n;saveQ()}
+  }catch(e){if(e.code==="SESSION_EXPIRED")sessionGone()}flushQ.busy=false}
+function cloudProgress(keys){if(!ACC.tok)return;keys.filter(k=>k&&(MEM[k]||ADV[k])).forEach(k=>Q.p[k]=[MEM[k]||0,ADV[k]||0]);saveQ();flushQ()}
+function cloudTest(x){if(!ACC.tok)return;Q.t.push(x);saveQ();flushQ()}
+async function accSync(){if(!ACC.tok)return;
+  try{const d=await rpc("student_sync",{p_token:ACC.tok});ACC.name=d.name||ACC.name;accSave();
+    const sp=d.progress||{};for(const k in sp){MEM[k]=Math.max(MEM[k]||0,sp[k][0]||0);if(sp[k][1])ADV[k]=Math.max(ADV[k]||0,sp[k][1])}
+    for(const k in MEM){if(MEM[k]>((sp[k]||[0])[0]||0)||(ADV[k]||0)>((sp[k]||[0,0])[1]||0))Q.p[k]=[MEM[k]||0,ADV[k]||0]}
+    for(const k in ADV){if(!MEM[k]&&ADV[k]>((sp[k]||[0,0])[1]||0))Q.p[k]=[0,ADV[k]]}
+    TBEST=Math.max(TBEST,d.best||0);store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",TBEST);saveQ();
+    drawAcc();if(!$("#home").hidden)renderHome();flushQ()}
+  catch(e){if(e.code==="SESSION_EXPIRED")sessionGone()}}
+$("#accForm").onsubmit=async e=>{e.preventDefault();const u=$("#accUser").value.trim().toLowerCase(),p=$("#accPw").value.trim(),m=$("#accMsg");
+  if(!u||!p){m.textContent="请输入账号和密码。";return}
+  $("#accGo").disabled=true;m.textContent="";
+  try{const d=await rpc("student_login",{p_username:u,p_password:p});
+    if(ACC.user&&ACC.user!==d.username)resetLocal();
+    Object.assign(ACC,{tok:d.token,name:d.name,user:d.username,cls:d.class||"",guest:false});accSave();
+    $("#accBox").hidden=true;$("#accPw").value="";drawAcc();toast(`欢迎，${d.name}`);await accSync()}
+  catch(err){m.textContent=err.code==="BAD_LOGIN"?"账号或密码不对，请再试一次。":err.code==="LOCKED"?"密码输错太多次，请 10 分钟后再试。":"连不上网络，请稍后再试。"}
+  $("#accGo").disabled=false};
+$("#accGuest").onclick=()=>{ACC.guest=true;accSave();$("#accBox").hidden=true};
+$("#accBtn").onclick=async()=>{if(!ACC.tok){showLogin();return}
+  const t=ACC.tok;await flushQ();try{await rpc("student_logout",{p_token:t})}catch(e){}
+  ACC.tok=null;ACC.name="";accSave();resetLocal();drawAcc();renderHome();toast("已退出");showLogin()};
+/* 练习时长：页面在前台、最近 2 分钟内有操作才计时，每分钟上报一次 */
+let lastAct=Date.now(),actSec=0;["pointerdown","keydown","touchstart","wheel"].forEach(ev=>addEventListener(ev,()=>{lastAct=Date.now()},{passive:true}));
+setInterval(()=>{if(!ACC.tok||document.visibilityState!=="visible"||Date.now()-lastAct>120000)return;actSec++;
+  if(actSec>=60){Q.sec+=actSec;actSec=0;saveQ();flushQ()}},1000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&ACC.tok&&actSec>0){const n=actSec;actSec=0;
+  rpc("student_heartbeat",{p_token:ACC.tok,p_seconds:n},true).catch(()=>{Q.sec+=n;saveQ()})}});
+addEventListener("online",flushQ);
+
 buildAll();if(!setPack(store.get("xb5-pack",null)||{kind:"book",key:"约翰福音"}))setPack({kind:"book",key:"约翰福音"});
 renderHome();initClass();
+drawAcc();if(ACC.tok)accSync();else if(!ACC.guest)showLogin();
 </script>
 
 
