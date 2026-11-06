@@ -212,6 +212,8 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const BOOKS={"创":"创世记","出":"出埃及记","利":"利未记","民":"民数记","申":"申命记","书":"约书亚记","士":"士师记","得":"路得记","撒上":"撒母耳记上","撒下":"撒母耳记下","王上":"列王纪上","王下":"列王纪下","代上":"历代志上","代下":"历代志下","拉":"以斯拉记","尼":"尼希米记","斯":"以斯帖记","伯":"约伯记","诗":"诗篇","箴":"箴言","传":"传道书","歌":"雅歌","赛":"以赛亚书","耶":"耶利米书","哀":"耶利米哀歌","结":"以西结书","但":"但以理书","何":"何西阿书","珥":"约珥书","摩":"阿摩司书","俄":"俄巴底亚书","拿":"约拿书","弥":"弥迦书","鸿":"那鸿书","哈":"哈巴谷书","番":"西番雅书","该":"哈该书","亚":"撒迦利亚书","玛":"玛拉基书","太":"马太福音","可":"马可福音","路":"路加福音","约":"约翰福音","徒":"使徒行传","罗":"罗马书","林前":"哥林多前书","林后":"哥林多后书","加":"加拉太书","弗":"以弗所书","腓":"腓立比书","西":"歌罗西书","帖前":"帖撒罗尼迦前书","帖后":"帖撒罗尼迦后书","提前":"提摩太前书","提后":"提摩太后书","多":"提多书","门":"腓利门书","来":"希伯来书","雅":"雅各书","彼前":"彼得前书","彼后":"彼得后书","约壹":"约翰一书","约贰":"约翰二书","约叁":"约翰三书","犹":"犹大书","启":"启示录"};
 const BORDER=Object.keys(BOOKS);
+/* 出处里的书卷：中文“约 3:16”→约；英文“1 John 3:16”→1 John */
+const bookOf=k=>k.replace(/#\d+$/,"").replace(/\s+\d+:[\d:,\-–]+$/,"");
 let CLASSES=[],CID=null,ROWS=[],SORT={k:"username",d:1},signMode=false;
 
 /* ---------- 文字格式 ---------- */
@@ -272,10 +274,10 @@ async function loadDay(){const today=ymd(new Date());if(DAY>today)DAY=today;$("#
   const want=DAY,cid=CID;const {data,error}=await SB.rpc("teacher_day",{p_class:CID,p_day:DAY});if(want!==DAY||cid!==CID)return;
   if(error){$("#appMsg").textContent=errText(error);return}DAYROWS=data||[];drawDay()}
 function hwState(r){const m=r.sec/60;if(!r.sec&&!r.plays.length&&!r.tests.length)return 0;return m>=GOAL?2:1}
-function vlabel(k){const ab=k.split(" ")[0],rest=k.slice(ab.length+1);return ab+rest.replace(/#(\d+)/,(m,n)=>"·"+(+n+1))}
+function vlabel(k){const ab=bookOf(k),rest=k.slice(ab.length+1);return ab+(/^[\u4e00-\u9fff]/.test(ab)?"":" ")+rest.replace(/#(\d+)/,(m,n)=>"·"+(+n+1))}
 function verseChips(plays){if(!plays.length)return '<span class="hint">—</span>';
   const g=new Map();plays.forEach(p=>{const key=p.k+"|"+p.m;const o=g.get(key)||{k:p.k,m:p.m,n:0,best:0,times:[]};o.n++;o.best=Math.max(o.best,p.s);o.times.push(hm(p.t)+" "+"★".repeat(p.s));g.set(key,o)});
-  return '<div class="vchips">'+[...g.values()].map(o=>`<span class="vchip s${o.best}${o.m==="a"?" adv":""}" title="${esc((BOOKS[o.k.split(" ")[0]]||"")+" "+o.k.split(" ").slice(1).join(" "))}${o.m==="a"?"（高阶默写）":""}&#10;${esc(o.times.join("\n"))}">${esc(vlabel(o.k))}${o.n>1?`<b>×${o.n}</b>`:""}</span>`).join("")+'</div>'}
+  return '<div class="vchips">'+[...g.values()].map(o=>`<span class="vchip s${o.best}${o.m==="a"?" adv":""}" title="${esc(/^[\u4e00-\u9fff]/.test(o.k)?(BOOKS[bookOf(o.k)]||"")+" "+o.k.slice(bookOf(o.k).length+1):o.k+"（ESV 英文）")}${o.m==="a"?"（高阶默写）":""}&#10;${esc(o.times.join("\n"))}">${esc(vlabel(o.k))}${o.n>1?`<b>×${o.n}</b>`:""}</span>`).join("")+'</div>'}
 function testCell(tests){return tests.length?tests.map(t=>`<span class="tsc" title="${hm(t.t)}${t.c!=null?"　对 "+t.c+" 错 "+t.w:""}">${t.s}</span>`).join('<span class="hint"> · </span>'):'<span class="hint">—</span>'}
 function timeBar(sec){const m=sec/60,max=Math.max(GOAL*2,60);return `<div class="bar${m>=GOAL?" green":""}"><i class="tbar"><em style="width:${Math.min(100,m/max*100)}%"></em><span class="goalmark" style="left:${GOAL/max*100}%"></span></i>${sec?dur(sec):"0"}</div>`}
 const PILL=[['none','没练'],['mid',''],['on','完成']];
@@ -361,12 +363,12 @@ function testChart(tests){const W=520,H=190,L=40,B=26,T=14;if(!tests.length)retu
 function niceStep(max){const raw=max/4,p=Math.pow(10,Math.floor(Math.log10(raw))),n=raw/p;return (n<=1?1:n<=2?2:n<=5?5:10)*p}
 function progressGrid(progress){if(!progress.length)return `<p class="hint">还没有过关记录。</p>`;
   const units=progress.filter(p=>!progress.some(q=>q.k.startsWith(p.k+"#")));
-  const groups={};units.forEach(p=>{const ab=p.k.split(" ")[0];(groups[ab]=groups[ab]||[]).push(p)});
-  const key=s=>{const m=s.split(" ")[1]||"";const n=m.match(/\d+/g)||[0,0];return (+n[0])*1000+(+n[1]||0)+(m.includes("#")?+m.split("#")[1]/100:0)};
+  const groups={};units.forEach(p=>{const ab=bookOf(p.k);(groups[ab]=groups[ab]||[]).push(p)});
+  const key=s=>{const m=s.slice(bookOf(s).length+1);const n=m.match(/\d+/g)||[0,0];return (+n[0])*1000+(+n[1]||0)+(m.includes("#")?+m.split("#")[1]/100:0)};
   const order=Object.keys(groups).sort((a,b)=>(BORDER.indexOf(a)+1||999)-(BORDER.indexOf(b)+1||999));
   return `<div class="legend" style="margin-bottom:10px"><span><i style="background:#f8e2b8"></i>一星</span><span><i style="background:#efbf6b"></i>两星</span><span><i style="background:#d58d2c"></i>三星</span><span><i style="background:#4f5f8c"></i>“默”＝高阶默写过关</span></div><div class="books">`+
     order.map(ab=>{const list=groups[ab].sort((a,b)=>key(a.k)-key(b.k));const s3=list.filter(p=>p.s===3).length;
-      return `<div class="book"><h4>${esc(BOOKS[ab]||ab)}<small>${list.length} 关 · 三星 ${s3} 关</small></h4><div class="cells">${list.map(p=>{const lab=p.k.slice(ab.length+1).replace(/#(\d+)/,(m,n)=>"·"+(+n+1));return `<span class="cell s${p.s}${p.a?" adv":""}" title="${esc(p.k)}：${p.s} 星${p.a?"，默写 "+p.a+" 星":""}">${esc(lab)}</span>`}).join("")}</div></div>`}).join("")+`</div>`}
+      return `<div class="book"><h4>${esc(BOOKS[ab]||ab+" · ESV 英文")}<small>${list.length} 关 · 三星 ${s3} 关</small></h4><div class="cells">${list.map(p=>{const lab=p.k.slice(ab.length+1).replace(/#(\d+)/,(m,n)=>"·"+(+n+1));return `<span class="cell s${p.s}${p.a?" adv":""}" title="${esc(p.k)}：${p.s} 星${p.a?"，默写 "+p.a+" 星":""}">${esc(lab)}</span>`}).join("")}</div></div>`}).join("")+`</div>`}
 
 /* ---------- 学生账号 ---------- */
 let ACCTS=[];
