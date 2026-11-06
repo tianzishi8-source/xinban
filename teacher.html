@@ -91,7 +91,8 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
 .hwbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px}
 .daynav{display:flex;gap:6px;align-items:center}
 .daynav input{width:auto;padding:7px 10px;font-weight:700}
-.daynav .btn{padding:7px 12px}
+.daynav .btn{padding:7px 12px;white-space:nowrap}
+.daynav #dPrev,.daynav #dNext{font-size:18px;line-height:1;padding:6px 14px}
 .goal{display:flex;flex-direction:row;align-items:center;gap:6px;font-weight:500;color:var(--muted)}
 .goal input{width:64px;padding:6px 8px;text-align:center;font-weight:700}
 .hwsum{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 12px}
@@ -155,12 +156,12 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
       <div id="hwView" hidden>
         <div class="card">
           <div class="hwbar">
-            <div class="daynav"><button class="btn ghost small" id="dPrev" aria-label="前一天">‹ 前一天</button><input type="date" id="dPick" aria-label="日期"><button class="btn ghost small" id="dNext" aria-label="后一天">后一天 ›</button><button class="btn ghost small" id="dToday">今天</button></div>
+            <div class="daynav"><button class="btn ghost small" id="dPrev" aria-label="前一天">‹</button><input type="date" id="dPick" aria-label="日期"><button class="btn ghost small" id="dNext" aria-label="后一天">›</button><button class="btn ghost small" id="dToday">今天</button></div>
             <label class="goal" for="goalMin">作业要求：每天至少<input id="goalMin" type="number" min="1" max="180" inputmode="numeric">分钟</label>
           </div>
           <div class="hwsum" id="hwSum"></div>
           <div class="tablewrap"><table id="hwTbl"></table></div>
-          <p class="hint" style="margin-top:10px">点一行看这个学生最近两周每天的记录。练习时长只算页面开着、并且在操作的时间；星星颜色越深，那一遍错得越少；带蓝框的是高阶默写。</p>
+          <p class="hint" style="margin-top:10px">点一行看这个学生最近一周每天的记录。练习时长只算页面开着、并且在操作的时间；星星颜色越深，那一遍错得越少；带蓝框的是高阶默写。</p>
         </div>
       </div>
 
@@ -331,11 +332,11 @@ async function openDetail(id){let r=ROWS.find(x=>x.id===id);if(!r){await loadOve
   const {data,error}=await SB.rpc("teacher_student_detail",{p_student:id});if(error){box.innerHTML=`<p class="msg err">${esc(errText(error))}</p>`;return}
   box.innerHTML=`<div class="dhead"><h3>${esc(r.name)}<small class="hint" style="font-family:var(--f-body);font-weight:400;margin-left:8px">账号 ${esc(r.username)} · ${ago(r.last_seen)}</small></h3><button class="btn ghost small" id="dClose">收起</button></div>
     <div class="tiles"><div class="tile"><b>${dur(r.week_sec)}</b><span>近 7 天练习</span></div><div class="tile"><b>${dur(r.total_sec)}</b><span>累计练习</span></div><div class="tile"><b>${r.passed} 关</b><span>已过关${r.adv?"（默写 "+r.adv+" 关）":""}</span></div><div class="tile"><b>${r.tests?r.best_score+" 分":"—"}</b><span>测验最高分 · 共 ${r.tests} 次</span></div></div>
-    <div><h4 style="margin:0 0 8px;font-size:14px;color:#6b4a1f">最近两周每天的记录</h4><div class="tablewrap" id="dDays"><p class="hint">载入中……</p></div></div>
+    <div><h4 style="margin:0 0 8px;font-size:14px;color:#6b4a1f">最近一周每天的记录</h4><div class="tablewrap" id="dDays"><p class="hint">载入中……</p></div></div>
     <div class="charts"><div class="chart"><h4>近 30 天每天练习时长（分钟）</h4>${usageChart(data.usage,data.today)}</div><div class="chart"><h4>最近 ${data.tests.length} 次测验得分</h4>${testChart(data.tests)}</div></div>
     <div><h4 style="margin:0 0 8px;font-size:14px;color:#6b4a1f">闯关进度</h4>${progressGrid(data.progress)}</div>`;
   $("#dClose").onclick=()=>{box.hidden=true};box.scrollIntoView({behavior:"smooth",block:"start"});
-  const dd=await SB.rpc("teacher_student_days",{p_student:id,p_days:14});const el=$("#dDays");if(!el)return;
+  const dd=await SB.rpc("teacher_student_days",{p_student:id,p_days:7});const el=$("#dDays");if(!el)return;
   if(dd.error){el.innerHTML=`<p class="msg err">${esc(errText(dd.error))}</p>`;return}
   el.innerHTML=`<table class="days"><thead><tr><th>日期</th><th>作业</th><th>练习时长</th><th>时间段</th><th>过关</th><th>练了哪些经文</th><th>测验</th></tr></thead><tbody>`+
     (dd.data||[]).map(x=>{const r={sec:x.sec,plays:x.plays,tests:x.tests};return `<tr><td class="dd"><b>${dayLabel(x.d)}</b></td><td>${statePill(r)}</td><td>${timeBar(x.sec)}</td><td>${x.first?hm(x.first)+"–"+hm(x.last):'<span class="hint">—</span>'}</td><td>${x.plays.length?x.plays.length+" 遍":'<span class="hint">—</span>'}</td><td class="verses">${verseChips(x.plays)}</td><td>${testCell(x.tests)}</td></tr>`}).join("")+`</tbody></table>`}
