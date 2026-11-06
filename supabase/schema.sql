@@ -442,3 +442,88 @@ grant execute on function public.teacher_classes(), public.teacher_create_class(
   public.teacher_reset_password(bigint), public.teacher_rename_student(bigint, text), public.teacher_delete_student(bigint),
   public.teacher_overview(bigint), public.teacher_student_detail(bigint), public.teacher_accounts(bigint)
   to anon, authenticated;
+-- ========== 2026-11-06（三）：作业检查——每次过关的记录、每天练习的时间段 ==========
+alter table public.usage_daily add column if not exists first_at timestamptz, add column if not exists last_at timestamptz;
+
+-- 每过一关记一条（同一节经文练几遍就记几条）
+create table if not exists public.plays (
+  id         bigint generated always as identity primary key,
+  student_id bigint not null references public.students (id) on delete cascade,
+  unit_key   text not null,
+  mode       text not null check (mode in ('n', 'a')),   -- n 普通训练，a 高阶默写
+  stars      smallint not null check (stars between 1 and 3),
+  misses     smallint not null default 0,
+  at         timestamptz not null default now()
+);
+create index if not exists plays_student_at on public.plays (student_id, at);
+alter table public.plays enable row level security;
+
+create or replace function public.student_heartbeat(p_token text, p_seconds int) returns void
+language plpgsql security definer set search_path = '' as $$
+declare sid bigint := private.student_of(p_token); sec int := least(greatest(coalesce(p_seconds, 0), 0), 120);
+begin
+  insert into public.usage_daily as u (student_id, day, seconds, first_at, last_at)
+  values (sid, private.today(), sec, now() - make_interval(secs => sec), now())
+  on conflict (student_id, day) do update set seconds = least(u.seconds + excluded.seconds, 86400),
+    first_at = coalesce(u.first_at, excluded.first_at), last_at = now();
+  update public.students set last_seen = now() where id = sid;
+end $$;
+
+-- 上传过关记录：[{k, m, s, x, t}]，t 为客户端毫秒时间（离线攒下的也能补传，最多 7 天前）
+create or replace function public.student_save_plays(p_token text, p_items jsonb) returns void
+language plpgsql security definer set search_path = '' as $$
+declare sid bigint := private.student_of(p_token);
+begin
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) > 200 then raise exception 'BAD_INPUT'; end if;
+  insert into public.plays (student_id, unit_key, mode, stars, misses, at)
+  select sid, left(x->>'k', 60), case when x->>'m' = 'a' then 'a' else 'n' end,
+    least(greatest(coalesce((x->>'s')::int, 1), 1), 3), least(greatest(coalesce((x->>'x')::int, 0), 0), 999),
+    least(greatest(coalesce(to_timestamp((x->>'t')::double precision / 1000), now()), now() - interval '7 days'), now())
+  from jsonb_array_elements(p_items) x
+  where coalesce(x->>'k', '') <> '';
+end $$;
+
+-- 某一天全班的作业情况
+create or replace function public.teacher_day(p_class bigint, p_day date)
+returns json
+language plpgsql stable security definer set search_path = '' as $$
+declare r json;
+begin
+  if not private.owns_class(p_class) then raise exception 'NOT_YOUR_CLASS'; end if;
+  select coalesce(json_agg(json_build_object(
+    'id', s.id, 'name', s.name, 'username', s.username,
+    'sec', coalesce(u.seconds, 0), 'first', u.first_at, 'last', u.last_at,
+    'plays', coalesce((select json_agg(json_build_object('k', p.unit_key, 'm', p.mode, 's', p.stars, 't', p.at) order by p.at)
+       from public.plays p where p.student_id = s.id and (p.at at time zone 'Asia/Jakarta')::date = p_day), '[]'),
+    'tests', coalesce((select json_agg(json_build_object('s', t.score, 'c', t.correct, 'w', t.wrong, 't', t.created_at) order by t.created_at)
+       from public.tests t where t.student_id = s.id and (t.created_at at time zone 'Asia/Jakarta')::date = p_day), '[]')
+  ) order by s.username), '[]') into r
+  from public.students s left join public.usage_daily u on u.student_id = s.id and u.day = p_day
+  where s.class_id = p_class;
+  return r;
+end $$;
+
+-- 一个学生最近 n 天的每日记录
+create or replace function public.teacher_student_days(p_student bigint, p_days int default 14)
+returns json
+language plpgsql stable security definer set search_path = '' as $$
+declare r json; c bigint;
+begin
+  select class_id into c from public.students where id = p_student;
+  if c is null or not private.owns_class(c) then raise exception 'NOT_YOUR_CLASS'; end if;
+  select coalesce(json_agg(x order by x.d desc), '[]') into r from (
+    select d.d,
+      coalesce(u.seconds, 0) as sec, u.first_at as first, u.last_at as last,
+      coalesce((select json_agg(json_build_object('k', p.unit_key, 'm', p.mode, 's', p.stars, 't', p.at) order by p.at)
+        from public.plays p where p.student_id = p_student and (p.at at time zone 'Asia/Jakarta')::date = d.d), '[]') as plays,
+      coalesce((select json_agg(json_build_object('s', t.score, 't', t.created_at) order by t.created_at)
+        from public.tests t where t.student_id = p_student and (t.created_at at time zone 'Asia/Jakarta')::date = d.d), '[]') as tests
+    from (select g::date as d from generate_series(private.today() - (least(greatest(p_days, 1), 60) - 1), private.today(), interval '1 day') g) d
+    left join public.usage_daily u on u.student_id = p_student and u.day = d.d
+  ) x;
+  return r;
+end $$;
+
+revoke all on function public.student_save_plays(text, jsonb), public.teacher_day(bigint, date), public.teacher_student_days(bigint, int) from public;
+grant execute on function public.student_save_plays(text, jsonb), public.teacher_day(bigint, date), public.teacher_student_days(bigint, int) to anon, authenticated;
+revoke all on all functions in schema private from public, anon, authenticated;

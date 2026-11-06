@@ -87,6 +87,27 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+/* 作业检查 */
+.hwbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px}
+.daynav{display:flex;gap:6px;align-items:center}
+.daynav input{width:auto;padding:7px 10px;font-weight:700}
+.daynav .btn{padding:7px 12px}
+.goal{display:flex;flex-direction:row;align-items:center;gap:6px;font-weight:500;color:var(--muted)}
+.goal input{width:64px;padding:6px 8px;text-align:center;font-weight:700}
+.hwsum{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 12px}
+.hwsum .pill{font-size:13px;padding:4px 12px}
+.hwsum .names{font-size:13px;color:var(--muted)}
+td.verses{white-space:normal;min-width:240px;max-width:420px}
+.vchips{display:flex;flex-wrap:wrap;gap:4px}
+.vchip{font-size:12px;line-height:1;padding:5px 7px;border-radius:7px;background:#eee8de;color:#6b5a45;position:relative;white-space:nowrap}
+.vchip.s1{background:#f8e2b8;color:#7a4a1c}.vchip.s2{background:#efbf6b;color:#5a3300}.vchip.s3{background:#d58d2c;color:#fff}
+.vchip.adv{box-shadow:inset 0 0 0 2px #4f5f8c}
+.vchip b{font-weight:700;margin-left:3px;opacity:.85}
+.tbar{position:relative}
+.tbar .goalmark{position:absolute;top:-3px;bottom:-3px;width:2px;background:#6b4a1f;border-radius:1px}
+.tsc{font-weight:700;color:var(--goldDeep)}
+.days td{vertical-align:top}
+.days .dd b{display:block}.days .dd small{color:var(--muted);font-size:12px}
 /* 账号 */
 .acct{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media (max-width:820px){.acct{grid-template-columns:1fr}}
@@ -122,13 +143,26 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
     <div class="wrap">
       <div class="card classbar noprint">
         <label for="classSel" style="flex-direction:row;align-items:center;gap:8px">班级<select id="classSel"></select></label>
-        <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vStats" aria-pressed="true">学习情况</button><button id="vAcct" aria-pressed="false">学生账号与密码</button></div>
+        <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vHw" aria-pressed="true">作业检查</button><button id="vStats" aria-pressed="false">学习情况</button><button id="vAcct" aria-pressed="false">学生账号与密码</button></div>
         <span style="flex:1"></span>
         <form id="newClass" class="row" style="flex-wrap:nowrap"><input id="newClassName" placeholder="新班级名称，例如 初二一班" maxlength="40" style="width:200px"><button class="btn small" type="submit">新建班级</button></form>
       </div>
       <p class="msg err" id="appMsg"></p>
 
       <div id="noClass" class="card empty" hidden>还没有班级。在上面输入班级名称，点“新建班级”。</div>
+
+      <!-- 作业检查 -->
+      <div id="hwView" hidden>
+        <div class="card">
+          <div class="hwbar">
+            <div class="daynav"><button class="btn ghost small" id="dPrev" aria-label="前一天">‹ 前一天</button><input type="date" id="dPick" aria-label="日期"><button class="btn ghost small" id="dNext" aria-label="后一天">后一天 ›</button><button class="btn ghost small" id="dToday">今天</button></div>
+            <label class="goal" for="goalMin">作业要求：每天至少<input id="goalMin" type="number" min="1" max="180" inputmode="numeric">分钟</label>
+          </div>
+          <div class="hwsum" id="hwSum"></div>
+          <div class="tablewrap"><table id="hwTbl"></table></div>
+          <p class="hint" style="margin-top:10px">点一行看这个学生最近两周每天的记录。练习时长只算页面开着、并且在操作的时间；星星颜色越深，那一遍错得越少；带蓝框的是高阶默写。</p>
+        </div>
+      </div>
 
       <!-- 学习情况 -->
       <div id="statsView" class="wrap" hidden>
@@ -140,8 +174,9 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
           </div>
           <div class="tablewrap"><table id="tbl"></table></div>
         </div>
-        <div class="card detail" id="detail" hidden></div>
       </div>
+
+      <div class="card detail" id="detail" hidden></div>
 
       <!-- 学生账号 -->
       <div id="acctView" hidden>
@@ -212,10 +247,58 @@ $("#newClass").onsubmit=async e=>{e.preventDefault();const n=$("#newClassName").
   const {data,error}=await SB.rpc("teacher_create_class",{p_name:n});if(error){$("#appMsg").textContent=errText(error);return}
   $("#newClassName").value="";localStorage.setItem("xb-teacher-class",data.id);await loadClasses(data.id);setView("acct")};
 
-let VIEW="stats";
-function setView(v){VIEW=v;$("#vStats").setAttribute("aria-pressed",v==="stats");$("#vAcct").setAttribute("aria-pressed",v==="acct");showView()}
-$("#vStats").onclick=()=>setView("stats");$("#vAcct").onclick=()=>setView("acct");
-function showView(){if(!CID)return;$("#statsView").hidden=VIEW!=="stats";$("#acctView").hidden=VIEW!=="acct";loadOverview();loadAccounts()}
+let VIEW=(()=>{try{return localStorage.getItem("xb-teacher-view")||"hw"}catch(e){return "hw"}})();if(!["hw","stats","acct"].includes(VIEW))VIEW="hw";
+function setView(v){if(v!==VIEW)$("#detail").hidden=true;VIEW=v;try{localStorage.setItem("xb-teacher-view",v)}catch(e){}showView()}
+$("#vHw").onclick=()=>setView("hw");$("#vStats").onclick=()=>setView("stats");$("#vAcct").onclick=()=>setView("acct");
+function showView(){if(!CID)return;[["hw","#vHw"],["stats","#vStats"],["acct","#vAcct"]].forEach(([k,b])=>$(b).setAttribute("aria-pressed",VIEW===k));
+  $("#hwView").hidden=VIEW!=="hw";$("#statsView").hidden=VIEW!=="stats";$("#acctView").hidden=VIEW!=="acct";if(VIEW==="acct")$("#detail").hidden=true;
+  loadOverview();loadAccounts();if(VIEW==="hw")loadDay()}
+
+/* ---------- 作业检查 ---------- */
+const TZ="Asia/Jakarta";
+const ymd=d=>d.toLocaleDateString("en-CA",{timeZone:TZ});
+const hm=t=>t?new Date(t).toLocaleTimeString("zh-CN",{timeZone:TZ,hour:"2-digit",minute:"2-digit",hour12:false}):"";
+const WK="日一二三四五六";
+function dayLabel(k){const d=new Date(k+"T12:00:00"),t=ymd(new Date()),y=ymd(new Date(Date.now()-864e5));return (k===t?"今天":k===y?"昨天":(d.getMonth()+1)+"月"+d.getDate()+"日")+" · 周"+WK[d.getDay()]}
+function shiftDay(k,n){const d=new Date(k+"T12:00:00");d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+let DAY=ymd(new Date()),DAYROWS=[];
+let GOAL=(()=>{try{return +localStorage.getItem("xb-teacher-goal")||15}catch(e){return 15}})();
+$("#goalMin").value=GOAL;
+$("#goalMin").onchange=()=>{GOAL=Math.min(180,Math.max(1,Math.round(+$("#goalMin").value||15)));$("#goalMin").value=GOAL;try{localStorage.setItem("xb-teacher-goal",GOAL)}catch(e){}drawDay()};
+$("#dPick").onchange=()=>{if($("#dPick").value){DAY=$("#dPick").value;loadDay()}};
+$("#dPrev").onclick=()=>{DAY=shiftDay(DAY,-1);loadDay()};$("#dNext").onclick=()=>{DAY=shiftDay(DAY,1);loadDay()};$("#dToday").onclick=()=>{DAY=ymd(new Date());loadDay()};
+async function loadDay(){const today=ymd(new Date());if(DAY>today)DAY=today;$("#dPick").value=DAY;$("#dPick").max=today;$("#dNext").disabled=DAY>=today;
+  const want=DAY,cid=CID;const {data,error}=await SB.rpc("teacher_day",{p_class:CID,p_day:DAY});if(want!==DAY||cid!==CID)return;
+  if(error){$("#appMsg").textContent=errText(error);return}DAYROWS=data||[];drawDay()}
+function hwState(r){const m=r.sec/60;if(!r.sec&&!r.plays.length&&!r.tests.length)return 0;return m>=GOAL?2:1}
+function vlabel(k){const ab=k.split(" ")[0],rest=k.slice(ab.length+1);return ab+rest.replace(/#(\d+)/,(m,n)=>"·"+(+n+1))}
+function verseChips(plays){if(!plays.length)return '<span class="hint">—</span>';
+  const g=new Map();plays.forEach(p=>{const key=p.k+"|"+p.m;const o=g.get(key)||{k:p.k,m:p.m,n:0,best:0,times:[]};o.n++;o.best=Math.max(o.best,p.s);o.times.push(hm(p.t)+" "+"★".repeat(p.s));g.set(key,o)});
+  return '<div class="vchips">'+[...g.values()].map(o=>`<span class="vchip s${o.best}${o.m==="a"?" adv":""}" title="${esc((BOOKS[o.k.split(" ")[0]]||"")+" "+o.k.split(" ").slice(1).join(" "))}${o.m==="a"?"（高阶默写）":""}&#10;${esc(o.times.join("\n"))}">${esc(vlabel(o.k))}${o.n>1?`<b>×${o.n}</b>`:""}</span>`).join("")+'</div>'}
+function testCell(tests){return tests.length?tests.map(t=>`<span class="tsc" title="${hm(t.t)}${t.c!=null?"　对 "+t.c+" 错 "+t.w:""}">${t.s}</span>`).join('<span class="hint"> · </span>'):'<span class="hint">—</span>'}
+function timeBar(sec){const m=sec/60,max=Math.max(GOAL*2,60);return `<div class="bar${m>=GOAL?" green":""}"><i class="tbar"><em style="width:${Math.min(100,m/max*100)}%"></em><span class="goalmark" style="left:${GOAL/max*100}%"></span></i>${sec?dur(sec):"0"}</div>`}
+const PILL=[['none','没练'],['mid',''],['on','完成']];
+function statePill(r){const st=hwState(r);if(st===1){const left=Math.max(1,Math.ceil(GOAL-r.sec/60));return `<span class="pill mid">差 ${left} 分钟</span>`}return `<span class="pill ${PILL[st][0]}">${st===2?"✓ 完成":"没练"}</span>`}
+function drawDay(){const t=$("#hwTbl"),sum=$("#hwSum");
+  if(!DAYROWS.length){sum.innerHTML="";t.innerHTML=`<tbody><tr><td class="empty">这个班还没有学生。</td></tr></tbody>`;return}
+  const by=[[],[],[]];DAYROWS.forEach(r=>by[hwState(r)].push(r));
+  const nm=a=>a.map(r=>esc(r.name)).join("、");
+  sum.innerHTML=`<b style="font-family:var(--f-head);font-size:18px;margin-right:4px">${dayLabel(DAY)}</b>
+    <span class="pill on">完成 ${by[2].length} 人</span><span class="pill mid">练了但不够 ${by[1].length} 人</span><span class="pill none">没练 ${by[0].length} 人</span>
+    ${by[0].length+by[1].length?`<button class="btn ghost small" id="copyMiss">复制未完成名单</button>`:""}`+
+    (by[1].length?`<div class="names" style="flex-basis:100%">不够：${nm(by[1])}</div>`:"")+(by[0].length?`<div class="names" style="flex-basis:100%">没练：${nm(by[0])}</div>`:"");
+  const cm=$("#copyMiss");if(cm)cm.onclick=()=>{const txt=`${clsName()} ${dayLabel(DAY).split(" · ")[0]}经文闯关作业（每天至少 ${GOAL} 分钟）\n`+(by[1].length?"还差一点："+by[1].map(r=>r.name+"（练了 "+Math.round(r.sec/60)+" 分钟）").join("、")+"\n":"")+(by[0].length?"还没练："+by[0].map(r=>r.name).join("、"):"");
+    navigator.clipboard.writeText(txt.trim()).then(()=>{cm.textContent="已复制";setTimeout(()=>cm.textContent="复制未完成名单",1500)},()=>prompt("复制下面的文字",txt))};
+  t.innerHTML=`<thead><tr><th>学生</th><th>作业</th><th>练习时长</th><th>练习时间段</th><th>过关</th><th>练了哪些经文</th><th>测验得分</th></tr></thead><tbody>`+
+    DAYROWS.map(r=>`<tr data-id="${r.id}">
+      <td class="who"><b>${esc(r.name)}</b><small>${esc(r.username)}</small></td>
+      <td>${statePill(r)}</td>
+      <td>${timeBar(r.sec)}</td>
+      <td>${r.first?hm(r.first)+"–"+hm(r.last):'<span class="hint">—</span>'}</td>
+      <td>${r.plays.length?r.plays.length+" 遍":'<span class="hint">—</span>'}</td>
+      <td class="verses">${verseChips(r.plays)}</td>
+      <td>${testCell(r.tests)}</td></tr>`).join("")+"</tbody>";
+  t.querySelectorAll("tbody tr[data-id]").forEach(tr=>tr.onclick=()=>openDetail(+tr.dataset.id))}
 
 /* ---------- 学习情况 ---------- */
 async function loadOverview(){const {data,error}=await SB.rpc("teacher_overview",{p_class:CID});if(error){$("#appMsg").textContent=errText(error);return}
@@ -244,13 +327,18 @@ function drawTable(){const t=$("#tbl");
   t.querySelectorAll("tbody tr[data-id]").forEach(tr=>tr.onclick=()=>openDetail(+tr.dataset.id))}
 
 /* ---------- 学生详情 ---------- */
-async function openDetail(id){const r=ROWS.find(x=>x.id===id),box=$("#detail");box.hidden=false;box.innerHTML=`<p class="hint">正在载入 ${esc(r.name)} 的数据……</p>`;
+async function openDetail(id){let r=ROWS.find(x=>x.id===id);if(!r){await loadOverview();r=ROWS.find(x=>x.id===id);if(!r)return}const box=$("#detail");box.hidden=false;box.innerHTML=`<p class="hint">正在载入 ${esc(r.name)} 的数据……</p>`;
   const {data,error}=await SB.rpc("teacher_student_detail",{p_student:id});if(error){box.innerHTML=`<p class="msg err">${esc(errText(error))}</p>`;return}
   box.innerHTML=`<div class="dhead"><h3>${esc(r.name)}<small class="hint" style="font-family:var(--f-body);font-weight:400;margin-left:8px">账号 ${esc(r.username)} · ${ago(r.last_seen)}</small></h3><button class="btn ghost small" id="dClose">收起</button></div>
     <div class="tiles"><div class="tile"><b>${dur(r.week_sec)}</b><span>近 7 天练习</span></div><div class="tile"><b>${dur(r.total_sec)}</b><span>累计练习</span></div><div class="tile"><b>${r.passed} 关</b><span>已过关${r.adv?"（默写 "+r.adv+" 关）":""}</span></div><div class="tile"><b>${r.tests?r.best_score+" 分":"—"}</b><span>测验最高分 · 共 ${r.tests} 次</span></div></div>
+    <div><h4 style="margin:0 0 8px;font-size:14px;color:#6b4a1f">最近两周每天的记录</h4><div class="tablewrap" id="dDays"><p class="hint">载入中……</p></div></div>
     <div class="charts"><div class="chart"><h4>近 30 天每天练习时长（分钟）</h4>${usageChart(data.usage,data.today)}</div><div class="chart"><h4>最近 ${data.tests.length} 次测验得分</h4>${testChart(data.tests)}</div></div>
     <div><h4 style="margin:0 0 8px;font-size:14px;color:#6b4a1f">闯关进度</h4>${progressGrid(data.progress)}</div>`;
-  $("#dClose").onclick=()=>{box.hidden=true};box.scrollIntoView({behavior:"smooth",block:"start"})}
+  $("#dClose").onclick=()=>{box.hidden=true};box.scrollIntoView({behavior:"smooth",block:"start"});
+  const dd=await SB.rpc("teacher_student_days",{p_student:id,p_days:14});const el=$("#dDays");if(!el)return;
+  if(dd.error){el.innerHTML=`<p class="msg err">${esc(errText(dd.error))}</p>`;return}
+  el.innerHTML=`<table class="days"><thead><tr><th>日期</th><th>作业</th><th>练习时长</th><th>时间段</th><th>过关</th><th>练了哪些经文</th><th>测验</th></tr></thead><tbody>`+
+    (dd.data||[]).map(x=>{const r={sec:x.sec,plays:x.plays,tests:x.tests};return `<tr><td class="dd"><b>${dayLabel(x.d)}</b></td><td>${statePill(r)}</td><td>${timeBar(x.sec)}</td><td>${x.first?hm(x.first)+"–"+hm(x.last):'<span class="hint">—</span>'}</td><td>${x.plays.length?x.plays.length+" 遍":'<span class="hint">—</span>'}</td><td class="verses">${verseChips(x.plays)}</td><td>${testCell(x.tests)}</td></tr>`}).join("")+`</tbody></table>`}
 function usageChart(usage,today){const W=520,H=190,L=34,B=26,T=12,days=[],map={};usage.forEach(u=>map[u.d]=u.s);
   const end=new Date(today+"T00:00:00");for(let i=29;i>=0;i--){const d=new Date(end);d.setDate(d.getDate()-i);const k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");days.push({k,m:Math.round((map[k]||0)/60),d})}
   const max=Math.max(10,...days.map(x=>x.m)),step=niceStep(max),top=Math.ceil(max/step)*step,bw=(W-L-6)/30;

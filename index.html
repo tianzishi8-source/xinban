@@ -1086,7 +1086,7 @@ function finishLevel(){M.done=true;
   const stars=M.miss<=2?3:M.miss<=5?2:1,u=M.u,prev=MEM[u.key]||0;MEM[u.key]=Math.max(prev,stars);
   if(M.mode==="adv"){ADV[u.key]=Math.max(ADV[u.key]||0,stars);store.set("xb-adv",ADV)}
   if(u.seg!=null){const g=segsOf(u.v);if(g.every((_,i)=>MEM[segKey(u.v,i)]))MEM[u.v.ref]=Math.min(...g.map((_,i)=>MEM[segKey(u.v,i)]))}
-  store.set("xb4-mem",MEM);pushClass();pushProgress();cloudProgress([u.key,u.v.ref]);
+  store.set("xb4-mem",MEM);pushClass();pushProgress();cloudProgress([u.key,u.v.ref]);cloudPlay({k:u.key,m:M.mode==="adv"?"a":"n",s:stars,x:M.miss,t:Date.now()});
   const i=M.i,nx=i+1<UNITS.length?i+1:-1;
   $("#resBox").innerHTML=`<h2>第 ${i+1} 关　过关！</h2>
     <div class="bigstars anim">${[1,2,3].map(k=>`<span class="${k<=stars?"lit":""}" style="animation-delay:${.25+k*.3}s">★</span>`).join("")}</div>
@@ -1266,7 +1266,7 @@ $("#importSample").onclick=()=>{store.set("xb5-custom",[]);buildAll();if(PACK.ki
 /* ===== 学生账号（Supabase）：登录、进度和测验上传、每日练习时长 ===== */
 const SB_URL="https://ndaliuqndcongzdaekgu.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWxpdXFuZGNvbmd6ZGFla2d1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTg5MDIsImV4cCI6MjEwOTM3NDkwMn0.W6gYi-pRe7bM5adLl0YpwtqJq9lSQ0OnextINsOGrr8";
 const ACC={tok:store.get("xb-tok",null),name:store.get("xb-name",""),user:store.get("xb-user",""),cls:store.get("xb-cls",""),guest:store.get("xb-guest",false)};
-let Q=store.get("xb-q",{p:{},t:[],sec:0});const saveQ=()=>store.set("xb-q",Q);
+let Q=store.get("xb-q",{p:{},t:[],l:[],sec:0});Q.l=Q.l||[];const saveQ=()=>store.set("xb-q",Q);
 async function rpc(fn,args,keep){const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",keepalive:!!keep,headers:{apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(args||{})});
   const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch(e){}
   if(!r.ok){const e=new Error((d&&d.message)||("HTTP "+r.status));e.code=(d&&d.message)||"";throw e}return d}
@@ -1274,15 +1274,17 @@ function accSave(){store.set("xb-tok",ACC.tok);store.set("xb-name",ACC.name);sto
 function drawAcc(){const b=$("#accBtn");b.textContent=ACC.tok?`${ACC.name} · 退出`:"登录";b.classList.toggle("on",!!ACC.tok);
   const nb=document.querySelector(".nameBox");if(nb)nb.hidden=!!ACC.tok}
 function showLogin(msg){$("#accBox").hidden=false;$("#accMsg").textContent=msg||"";setTimeout(()=>{try{$("#accUser").focus({preventScroll:true})}catch(e){}},60)}
-function resetLocal(){MEM={};ADV={};TBEST=0;LOCALB=[];Q={p:{},t:[],sec:0};store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",0);store.set("xb4-local",[]);saveQ()}
+function resetLocal(){MEM={};ADV={};TBEST=0;LOCALB=[];Q={p:{},t:[],l:[],sec:0};store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",0);store.set("xb4-local",[]);saveQ()}
 function sessionGone(){ACC.tok=null;accSave();drawAcc();showLogin("登录已过期，请重新登录。")}
 async function flushQ(){if(!ACC.tok||flushQ.busy)return;flushQ.busy=true;
   try{const items=Object.entries(Q.p).map(([k,v])=>({k,s:v[0],a:v[1]}));
     if(items.length){await rpc("student_save_progress",{p_token:ACC.tok,p_items:items});Q.p={};saveQ()}
+    if(Q.l.length){const b=Q.l.slice(0,200);await rpc("student_save_plays",{p_token:ACC.tok,p_items:b});Q.l.splice(0,b.length);saveQ()}
     while(Q.t.length){const x=Q.t[0];await rpc("student_save_test",{p_token:ACC.tok,p_score:x.s,p_correct:x.c,p_wrong:x.w,p_combo:x.b,p_pack:x.p});Q.t.shift();saveQ()}
     if(Q.sec>0){const n=Math.min(Q.sec,120);await rpc("student_heartbeat",{p_token:ACC.tok,p_seconds:n});Q.sec-=n;saveQ()}
   }catch(e){if(e.code==="SESSION_EXPIRED")sessionGone()}flushQ.busy=false}
 function cloudProgress(keys){if(!ACC.tok)return;keys.filter(k=>k&&(MEM[k]||ADV[k])).forEach(k=>Q.p[k]=[MEM[k]||0,ADV[k]||0]);saveQ();flushQ()}
+function cloudPlay(x){if(!ACC.tok)return;Q.l.push(x);if(Q.l.length>400)Q.l.splice(0,Q.l.length-400);saveQ();flushQ()}
 function cloudTest(x){if(!ACC.tok)return;Q.t.push(x);saveQ();flushQ()}
 async function accSync(){if(!ACC.tok)return;
   try{const d=await rpc("student_sync",{p_token:ACC.tok});ACC.name=d.name||ACC.name;accSave();
