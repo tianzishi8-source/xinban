@@ -359,3 +359,86 @@ end $$;
 
 revoke all on function public.teacher_accounts(bigint) from public, anon;
 grant execute on function public.teacher_accounts(bigint) to authenticated;
+-- ========== 2026-11-06（二）：老师专属链接免登录；账号可用 班级+名字 ==========
+-- 学生账号可以是 g7samuel 这类形式（字母数字，2–24 位）
+alter table public.students drop constraint if exists students_username_check;
+alter table public.students add constraint students_username_check check (username ~ '^[a-z0-9]{2,24}$');
+
+-- 老师专属链接：链接里带一把长钥匙，数据库只存它的哈希
+create table if not exists private.teacher_keys (
+  key_hash   bytea primary key,
+  teacher_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+-- 当前老师：已登录用登录身份；否则看请求头 x-teacher-key
+create or replace function private.me() returns uuid
+language sql stable security definer set search_path = '' as $$
+  select coalesce((select auth.uid()),
+    (select k.teacher_id from private.teacher_keys k
+      where k.key_hash = extensions.digest(nullif(nullif(current_setting('request.headers', true), '')::json ->> 'x-teacher-key', ''), 'sha256')))
+$$;
+
+create or replace function private.owns_class(p_class bigint) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.classes where id = p_class and teacher_id = private.me())
+$$;
+
+create or replace function public.teacher_classes()
+returns table (id bigint, name text, prefix text, created_at timestamptz)
+language sql stable security definer set search_path = '' as $$
+  select c.id, c.name, c.prefix, c.created_at from public.classes c where c.teacher_id = private.me() order by c.name
+$$;
+
+create or replace function public.teacher_create_class(p_name text) returns public.classes
+language plpgsql security definer set search_path = '' as $$
+declare pre text; c public.classes; letters text := 'abcdefghjkmnpqrstuvwxyz'; t uuid := private.me();
+begin
+  if t is null then raise exception 'NOT_TEACHER'; end if;
+  loop
+    pre := substr(letters, 1 + floor(random() * 23)::int, 1) || substr(letters, 1 + floor(random() * 23)::int, 1);
+    exit when not exists (select 1 from public.classes where prefix = pre);
+  end loop;
+  insert into public.classes (teacher_id, name, prefix) values (t, trim(p_name), pre) returning * into c;
+  return c;
+end $$;
+
+-- 编号只看 前缀+数字 形式的账号，避免和 g7samuel 这类账号冲突
+create or replace function public.teacher_add_students(p_class bigint, p_names text[])
+returns table (name text, username text, password text)
+language plpgsql security definer set search_path = '' as $$
+declare pre text; n int; nm text; pw text; un text;
+begin
+  if not private.owns_class(p_class) then raise exception 'NOT_YOUR_CLASS'; end if;
+  select prefix into pre from public.classes where id = p_class;
+  select coalesce(max(substr(s.username, 3)::int), 0) into n from public.students s
+    where s.class_id = p_class and s.username ~ ('^' || pre || '[0-9]{2,3}$');
+  foreach nm in array p_names loop
+    nm := trim(nm);
+    continue when nm = '';
+    n := n + 1;
+    un := pre || lpad(n::text, 2, '0');
+    pw := private.random_digits(4);
+    insert into public.students (class_id, name, username, pw_hash, pw_view)
+    values (p_class, left(nm, 20), un, extensions.crypt(pw, extensions.gen_salt('bf', 8)), pw);
+    name := left(nm, 20); username := un; password := pw;
+    return next;
+  end loop;
+end $$;
+
+create or replace function public.teacher_reset_password(p_student bigint) returns text
+language plpgsql security definer set search_path = '' as $$
+declare pw text := private.random_digits(4);
+begin
+  if not exists (select 1 from public.students s where s.id = p_student and private.owns_class(s.class_id)) then raise exception 'NOT_YOUR_CLASS'; end if;
+  update public.students set pw_hash = extensions.crypt(pw, extensions.gen_salt('bf', 8)), pw_view = pw, fail_count = 0, locked_until = null where id = p_student;
+  delete from private.sessions where student_id = p_student;
+  return pw;
+end $$;
+
+revoke all on all functions in schema private from public, anon, authenticated;
+revoke all on function public.teacher_classes() from public;
+grant execute on function public.teacher_classes(), public.teacher_create_class(text), public.teacher_add_students(bigint, text[]),
+  public.teacher_reset_password(bigint), public.teacher_rename_student(bigint, text), public.teacher_delete_student(bigint),
+  public.teacher_overview(bigint), public.teacher_student_detail(bigint), public.teacher_accounts(bigint)
+  to anon, authenticated;

@@ -652,7 +652,7 @@ body[data-screen="board"] #skyfx,body[data-screen="import"] #skyfx,body[data-scr
 <div class="lvstart" id="accBox" hidden><form class="lvcard acccard" id="accForm" autocomplete="on" novalidate>
   <div class="lvrib">登　录</div>
   <p class="acctip">用老师发给你的账号和密码登录，<br>进度、练习时长和测验成绩会保存下来。</p>
-  <label class="fld" for="accUser">账号<input id="accUser" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="例如 km01" maxlength="6"></label>
+  <label class="fld" for="accUser">账号<input id="accUser" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="例如 g8grace" maxlength="24"></label>
   <label class="fld" for="accPw">密码<input id="accPw" name="password" type="password" inputmode="numeric" autocomplete="current-password" placeholder="6 位数字" maxlength="12"></label>
   <p class="msg err" id="accMsg" role="alert"></p>
   <button class="btn big" id="accGo" type="submit">登录</button>
@@ -1292,7 +1292,7 @@ async function accSync(){if(!ACC.tok)return;
     TBEST=Math.max(TBEST,d.best||0);store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",TBEST);saveQ();
     drawAcc();if(!$("#home").hidden)renderHome();flushQ()}
   catch(e){if(e.code==="SESSION_EXPIRED")sessionGone()}}
-$("#accForm").onsubmit=async e=>{e.preventDefault();const u=$("#accUser").value.trim().toLowerCase(),p=$("#accPw").value.trim(),m=$("#accMsg");
+$("#accForm").onsubmit=async e=>{e.preventDefault();const u=$("#accUser").value.replace(/\s+/g,"").toLowerCase(),p=$("#accPw").value.trim(),m=$("#accMsg");
   if(!u||!p){m.textContent="请输入账号和密码。";return}
   $("#accGo").disabled=true;m.textContent="";
   try{const d=await rpc("student_login",{p_username:u,p_password:p});

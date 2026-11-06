@@ -148,7 +148,7 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
         <div>
           <div class="card" style="display:flex;flex-direction:column;gap:12px">
             <h2 style="font-size:20px">添加学生</h2>
-            <p class="hint">每行写一个学生的名字，系统会自动生成账号和 6 位数字密码。</p>
+            <p class="hint">每行写一个学生的名字，系统会自动生成账号和 4 位数字密码。</p>
             <textarea id="names" placeholder="林小雨&#10;王约翰&#10;陈路加"></textarea>
             <div class="row"><button class="btn" id="addGo">生成账号</button><span class="msg" id="addMsg"></span></div>
           </div>
@@ -169,7 +169,9 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const SB=supabase.createClient("https://ndaliuqndcongzdaekgu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWxpdXFuZGNvbmd6ZGFla2d1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTg5MDIsImV4cCI6MjEwOTM3NDkwMn0.W6gYi-pRe7bM5adLl0YpwtqJq9lSQ0OnextINsOGrr8");
+/* 老师专属链接：teacher.html#k=钥匙，打开一次后这台设备会记住，不用登录 */
+const KEY=(()=>{const m=location.hash.match(/k=([\w-]{20,})/);try{if(m){localStorage.setItem("xb-teacher-key",m[1]);history.replaceState(null,"",location.pathname)}return m?m[1]:localStorage.getItem("xb-teacher-key")}catch(e){return m&&m[1]}})();
+const SB=supabase.createClient("https://ndaliuqndcongzdaekgu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWxpdXFuZGNvbmd6ZGFla2d1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTg5MDIsImV4cCI6MjEwOTM3NDkwMn0.W6gYi-pRe7bM5adLl0YpwtqJq9lSQ0OnextINsOGrr8",KEY?{global:{headers:{"x-teacher-key":KEY}},auth:{persistSession:false}}:undefined);
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const BOOKS={"创":"创世记","出":"出埃及记","利":"利未记","民":"民数记","申":"申命记","书":"约书亚记","士":"士师记","得":"路得记","撒上":"撒母耳记上","撒下":"撒母耳记下","王上":"列王纪上","王下":"列王纪下","代上":"历代志上","代下":"历代志下","拉":"以斯拉记","尼":"尼希米记","斯":"以斯帖记","伯":"约伯记","诗":"诗篇","箴":"箴言","传":"传道书","歌":"雅歌","赛":"以赛亚书","耶":"耶利米书","哀":"耶利米哀歌","结":"以西结书","但":"但以理书","何":"何西阿书","珥":"约珥书","摩":"阿摩司书","俄":"俄巴底亚书","拿":"约拿书","弥":"弥迦书","鸿":"那鸿书","哈":"哈巴谷书","番":"西番雅书","该":"哈该书","亚":"撒迦利亚书","玛":"玛拉基书","太":"马太福音","可":"马可福音","路":"路加福音","约":"约翰福音","徒":"使徒行传","罗":"罗马书","林前":"哥林多前书","林后":"哥林多后书","加":"加拉太书","弗":"以弗所书","腓":"腓立比书","西":"歌罗西书","帖前":"帖撒罗尼迦前书","帖后":"帖撒罗尼迦后书","提前":"提摩太前书","提后":"提摩太后书","多":"提多书","门":"腓利门书","来":"希伯来书","雅":"雅各书","彼前":"彼得前书","彼后":"彼得后书","约壹":"约翰一书","约贰":"约翰二书","约叁":"约翰三书","犹":"犹大书","启":"启示录"};
@@ -194,14 +196,15 @@ $("#authForm").onsubmit=async e=>{e.preventDefault();const email=$("#email").val
     else if(!data.session){m.className="msg ok";m.textContent="注册成功！请到邮箱点确认链接，然后回来登录。"}
   }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error){m.className="msg err";m.textContent=errText(error)}}
   $("#authGo").disabled=false};
-$("#logout").onclick=async()=>{await SB.auth.signOut()};
-SB.auth.onAuthStateChange((ev,session)=>{const on=!!session;$("#loginBox").hidden=on;$("#app").hidden=!on;$("#logout").hidden=!on;$("#me").textContent=on?session.user.email:"";if(on)loadClasses();});
+$("#logout").onclick=async()=>{if(KEY){try{localStorage.removeItem("xb-teacher-key")}catch(e){}location.reload();return}await SB.auth.signOut()};
+SB.auth.onAuthStateChange((ev,session)=>{if(KEY)return;const on=!!session;$("#loginBox").hidden=on;$("#app").hidden=!on;$("#logout").hidden=!on;$("#me").textContent=on?session.user.email:"";if(on)loadClasses();});
 
 /* ---------- 班级 ---------- */
-async function loadClasses(keep){const {data,error}=await SB.from("classes").select("id,name,prefix,created_at").order("created_at");
+async function loadClasses(keep){const {data,error}=await SB.rpc("teacher_classes");
   if(error){$("#appMsg").textContent=errText(error);return}
-  CLASSES=data||[];const sel=$("#classSel");sel.innerHTML=CLASSES.map(c=>`<option value="${c.id}">${esc(c.name)}（账号 ${esc(c.prefix)}01 起）</option>`).join("");
+  CLASSES=data||[];const sel=$("#classSel");sel.innerHTML=CLASSES.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
   $("#noClass").hidden=CLASSES.length>0;
+  if(KEY&&!CLASSES.length){$("#appMsg").textContent="这个链接打不开数据，可能复制时缺了几个字符。请重新打开完整的链接。"}
   if(!CLASSES.length){CID=null;$("#statsView").hidden=$("#acctView").hidden=true;return}
   const saved=+localStorage.getItem("xb-teacher-class")||0;CID=keep||(CLASSES.some(c=>c.id===saved)?saved:CLASSES[0].id);sel.value=CID;showView()}
 $("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-teacher-class",CID);$("#detail").hidden=true;$("#addMsg").textContent="";showView()};
@@ -308,7 +311,8 @@ async function acctOp(id,op,btn){const r=ACCTS.find(x=>x.id===id),cell=btn.close
     cell.querySelector("[data-n]").onclick=()=>drawAcct();
     cell.querySelector("[data-y]").onclick=async()=>{const {error}=await SB.rpc("teacher_delete_student",{p_student:id});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}}
 
-(async()=>{const {data}=await SB.auth.getSession();if(!data.session){$("#loginBox").hidden=false}})();
+(async()=>{if(KEY){$("#loginBox").hidden=true;$("#app").hidden=false;$("#logout").hidden=false;$("#logout").textContent="在这台设备上退出";$("#me").textContent="老师专属链接";loadClasses();return}
+  const {data}=await SB.auth.getSession();if(!data.session){$("#loginBox").hidden=false}})();
 </script>
 </body>
 </html>
