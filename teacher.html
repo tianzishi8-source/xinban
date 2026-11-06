@@ -42,7 +42,7 @@ label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;
 .login{max-width:420px;margin:40px auto 0;display:flex;flex-direction:column;gap:14px}
 .login h2{font-size:22px;text-align:center}
 .tabs{display:flex;gap:6px;background:#efe5d3;padding:4px;border-radius:12px}
-.tabs button{flex:1;border:0;background:transparent;padding:8px 10px;border-radius:9px;font-weight:700;color:var(--muted)}
+.tabs button{flex:1;white-space:nowrap;border:0;background:transparent;padding:8px 10px;border-radius:9px;font-weight:700;color:var(--muted)}
 .tabs button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 6px -3px rgba(120,80,30,.4)}
 /* 班级栏 */
 .classbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -94,7 +94,7 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
 .newlist td,.newlist th{font-size:15px}
 .pw{font-family:ui-monospace,Menlo,monospace;font-size:16px;letter-spacing:.1em;font-weight:700}
 .danger-q{color:var(--red);font-size:13px}
-@media print{body.printing .card:not(#newList),body.printing #tiles,body.printing .msg{display:none!important}.printonly{display:block!important}body{background:#fff;padding:0}body::before,.noprint{display:none!important}.card{box-shadow:none;border:0}.newlist td,.newlist th{font-size:16px;padding:10px}}
+@media print{body.printing .card:not(#acctCard),body.printing #tiles,body.printing .msg,body.printing .ops{display:none!important}body.printing .tablewrap{overflow:visible}body.printing table{min-width:0}.printonly{display:block!important}body{background:#fff;padding:0}body::before,.noprint{display:none!important}.card{box-shadow:none;border:0}.newlist td,.newlist th{font-size:16px;padding:10px}}
 </style>
 </head>
 <body>
@@ -122,7 +122,7 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
     <div class="wrap">
       <div class="card classbar noprint">
         <label for="classSel" style="flex-direction:row;align-items:center;gap:8px">班级<select id="classSel"></select></label>
-        <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vStats" aria-pressed="true">学习情况</button><button id="vAcct" aria-pressed="false">学生账号</button></div>
+        <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vStats" aria-pressed="true">学习情况</button><button id="vAcct" aria-pressed="false">学生账号与密码</button></div>
         <span style="flex:1"></span>
         <form id="newClass" class="row" style="flex-wrap:nowrap"><input id="newClassName" placeholder="新班级名称，例如 初二一班" maxlength="40" style="width:200px"><button class="btn small" type="submit">新建班级</button></form>
       </div>
@@ -145,25 +145,21 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
 
       <!-- 学生账号 -->
       <div id="acctView" hidden>
-        <div class="acct">
+        <div>
           <div class="card" style="display:flex;flex-direction:column;gap:12px">
             <h2 style="font-size:20px">添加学生</h2>
             <p class="hint">每行写一个学生的名字，系统会自动生成账号和 6 位数字密码。</p>
             <textarea id="names" placeholder="林小雨&#10;王约翰&#10;陈路加"></textarea>
             <div class="row"><button class="btn" id="addGo">生成账号</button><span class="msg" id="addMsg"></span></div>
           </div>
-          <div class="card newlist" id="newList" hidden>
-            <div class="row noprint" style="justify-content:space-between">
-              <h2 style="font-size:20px">新账号名单</h2>
-              <div class="row"><button class="btn ghost small" id="copyNew">复制全部</button><button class="btn ghost small" id="printNew">打印</button></div>
-            </div>
-            <p class="hint noprint" style="color:var(--red)">密码只在这里显示这一次，请现在复制或打印发给学生。忘了可以在下方“重置密码”。</p>
-            <h2 style="font-size:20px;display:none" class="printonly">心版 · 学生账号</h2>
-            <table id="newTbl"></table>
-          </div>
         </div>
-        <div class="card" style="margin-top:16px">
-          <h2 style="font-size:20px;margin-bottom:8px">全部学生</h2>
+        <div class="card" id="acctCard" style="margin-top:16px">
+          <div class="row noprint" style="justify-content:space-between;margin-bottom:6px">
+            <h2 style="font-size:20px">全班账号和密码</h2>
+            <div class="row"><button class="btn ghost small" id="copyAll">复制全班账号</button><button class="btn ghost small" id="printAll">打印</button></div>
+          </div>
+          <h2 class="printonly" style="font-size:22px;display:none;margin-bottom:6px" id="printTitle"></h2>
+          <p class="hint" id="siteLine" style="margin-bottom:8px"></p>
           <div class="tablewrap"><table id="acctTbl"></table></div>
         </div>
       </div>
@@ -208,7 +204,7 @@ async function loadClasses(keep){const {data,error}=await SB.from("classes").sel
   $("#noClass").hidden=CLASSES.length>0;
   if(!CLASSES.length){CID=null;$("#statsView").hidden=$("#acctView").hidden=true;return}
   const saved=+localStorage.getItem("xb-teacher-class")||0;CID=keep||(CLASSES.some(c=>c.id===saved)?saved:CLASSES[0].id);sel.value=CID;showView()}
-$("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-teacher-class",CID);$("#detail").hidden=true;$("#newList").hidden=true;showView()};
+$("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-teacher-class",CID);$("#detail").hidden=true;$("#addMsg").textContent="";showView()};
 $("#newClass").onsubmit=async e=>{e.preventDefault();const n=$("#newClassName").value.trim();if(!n)return;
   const {data,error}=await SB.rpc("teacher_create_class",{p_name:n});if(error){$("#appMsg").textContent=errText(error);return}
   $("#newClassName").value="";localStorage.setItem("xb-teacher-class",data.id);await loadClasses(data.id);setView("acct")};
@@ -216,7 +212,7 @@ $("#newClass").onsubmit=async e=>{e.preventDefault();const n=$("#newClassName").
 let VIEW="stats";
 function setView(v){VIEW=v;$("#vStats").setAttribute("aria-pressed",v==="stats");$("#vAcct").setAttribute("aria-pressed",v==="acct");showView()}
 $("#vStats").onclick=()=>setView("stats");$("#vAcct").onclick=()=>setView("acct");
-function showView(){if(!CID)return;$("#statsView").hidden=VIEW!=="stats";$("#acctView").hidden=VIEW!=="acct";loadOverview()}
+function showView(){if(!CID)return;$("#statsView").hidden=VIEW!=="stats";$("#acctView").hidden=VIEW!=="acct";loadOverview();loadAccounts()}
 
 /* ---------- 学习情况 ---------- */
 async function loadOverview(){const {data,error}=await SB.rpc("teacher_overview",{p_class:CID});if(error){$("#appMsg").textContent=errText(error);return}
@@ -226,7 +222,7 @@ function drawTiles(){const n=ROWS.length,today=ROWS.filter(r=>r.today_sec>0).len
   $("#tiles").innerHTML=[[n+" 人","学生人数"],[today+" 人","今天来练习"],[dur(Math.round(week)),"近 7 天人均练习"],[passed.toFixed(1)+" 关","人均过关"]].map(([b,s])=>`<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("")}
 const COLS=[["username","学生"],["last_seen","状态"],["today_sec","今天"],["week_sec","近 7 天"],["total_sec","累计"],["passed","过关"],["adv","默写过关"],["best_score","测验最高"],["last_score","最近一次"],["tests","测验次数"]];
 function drawTable(){const t=$("#tbl");
-  if(!ROWS.length){t.innerHTML=`<tbody><tr><td class="empty">这个班还没有学生。到“学生账号”里添加。</td></tr></tbody>`;return}
+  if(!ROWS.length){t.innerHTML=`<tbody><tr><td class="empty">这个班还没有学生。点上方“学生账号与密码”添加。</td></tr></tbody>`;return}
   const rs=ROWS.slice().sort((a,b)=>{const k=SORT.k;let x=a[k],y=b[k];if(k==="last_seen"){x=x?+new Date(x):0;y=y?+new Date(y):0}return (x>y?1:x<y?-1:0)*SORT.d});
   const maxW=Math.max(1,...ROWS.map(r=>r.week_sec)),maxP=Math.max(1,...ROWS.map(r=>r.passed)),maxS=Math.max(1,...ROWS.map(r=>r.best_score));
   t.innerHTML=`<thead><tr>${COLS.map(([k,l])=>`<th class="sort" data-k="${k}">${l}<span class="arr">${SORT.k===k?(SORT.d>0?"↑":"↓"):""}</span></th>`).join("")}</tr></thead><tbody>`+
@@ -281,33 +277,36 @@ function progressGrid(progress){if(!progress.length)return `<p class="hint">还�
       return `<div class="book"><h4>${esc(BOOKS[ab]||ab)}<small>${list.length} 关 · 三星 ${s3} 关</small></h4><div class="cells">${list.map(p=>{const lab=p.k.slice(ab.length+1).replace(/#(\d+)/,(m,n)=>"·"+(+n+1));return `<span class="cell s${p.s}${p.a?" adv":""}" title="${esc(p.k)}：${p.s} 星${p.a?"，默写 "+p.a+" 星":""}">${esc(lab)}</span>`}).join("")}</div></div>`}).join("")+`</div>`}
 
 /* ---------- 学生账号 ---------- */
-let NEW=[];
+let ACCTS=[];
+const SITE=()=>location.href.replace(/teacher\.html.*$/,"");
+const clsName=()=>(CLASSES.find(c=>c.id===CID)||{}).name||"";
+async function loadAccounts(){const {data,error}=await SB.rpc("teacher_accounts",{p_class:CID});if(error){$("#appMsg").textContent=errText(error);return}ACCTS=data||[];drawAcct()}
+function reloadAll(){loadOverview();loadAccounts()}
 $("#addGo").onclick=async()=>{const names=$("#names").value.split(/[\n,，、]+/).map(s=>s.trim()).filter(Boolean),m=$("#addMsg");
   if(!names.length){m.className="msg err";m.textContent="请先写学生名字。";return}
   if(names.length>80){m.className="msg err";m.textContent="一次最多 80 个。";return}
   $("#addGo").disabled=true;const {data,error}=await SB.rpc("teacher_add_students",{p_class:CID,p_names:names});$("#addGo").disabled=false;
   if(error){m.className="msg err";m.textContent=errText(error);return}
-  NEW=data||[];m.className="msg ok";m.textContent=`已生成 ${NEW.length} 个账号。`;$("#names").value="";drawNew();loadOverview()};
-function drawNew(){$("#newList").hidden=!NEW.length;const cls=(CLASSES.find(c=>c.id===CID)||{}).name||"";
-  $("#newTbl").innerHTML=`<thead><tr><th>姓名</th><th>账号</th><th>密码</th></tr></thead><tbody>`+NEW.map(r=>`<tr><td>${esc(r.name)}</td><td class="pw">${esc(r.username)}</td><td class="pw">${esc(r.password)}</td></tr>`).join("")+`</tbody>`;
-  $("#newList").dataset.cls=cls}
-$("#copyNew").onclick=async()=>{const site=location.href.replace(/teacher\.html.*$/,"");const txt=`心版 · ${(CLASSES.find(c=>c.id===CID)||{}).name||""}\n游戏网址：${site}\n\n`+NEW.map(r=>`${r.name}　账号：${r.username}　密码：${r.password}`).join("\n");
-  try{await navigator.clipboard.writeText(txt);$("#copyNew").textContent="已复制"}catch(e){prompt("复制下面的内容",txt)}setTimeout(()=>$("#copyNew").textContent="复制全部",1500)};
-$("#printNew").onclick=()=>{document.body.classList.add("printing");window.print();document.body.classList.remove("printing")};
-function drawAcct(){const t=$("#acctTbl");if(!ROWS.length){t.innerHTML=`<tbody><tr><td class="empty">还没有学生。</td></tr></tbody>`;return}
-  t.innerHTML=`<thead><tr><th>姓名</th><th>账号</th><th>最近上线</th><th></th></tr></thead><tbody>`+ROWS.slice().sort((a,b)=>a.username<b.username?-1:1).map(r=>`<tr data-id="${r.id}" style="cursor:default">
-    <td><span class="nm">${esc(r.name)}</span></td><td class="pw">${esc(r.username)}</td><td>${ago(r.last_seen)}</td>
+  m.className="msg ok";m.textContent=`已生成 ${(data||[]).length} 个账号，见下方名单。`;$("#names").value="";await loadAccounts();loadOverview();
+  $("#acctCard").scrollIntoView({behavior:"smooth",block:"start"})};
+$("#copyAll").onclick=async()=>{if(!ACCTS.length)return;const txt=`心版 · ${clsName()}\n游戏网址：${SITE()}\n\n`+ACCTS.map(r=>`${r.name}　账号：${r.username}　密码：${r.password||"（请重置）"}`).join("\n");
+  try{await navigator.clipboard.writeText(txt);$("#copyAll").textContent="已复制"}catch(e){prompt("复制下面的内容",txt)}setTimeout(()=>$("#copyAll").textContent="复制全班账号",1500)};
+$("#printAll").onclick=()=>{$("#printTitle").textContent=`心版 · ${clsName()} · 学生账号`;document.body.classList.add("printing");window.print();document.body.classList.remove("printing")};
+function drawAcct(){const t=$("#acctTbl");$("#siteLine").innerHTML=`学生在游戏网址 <b>${esc(SITE())}</b> 用下面的账号和密码登录。`;
+  if(!ACCTS.length){t.innerHTML=`<tbody><tr><td class="empty">还没有学生。在上面写名字，点“生成账号”。</td></tr></tbody>`;return}
+  t.innerHTML=`<thead><tr><th>姓名</th><th>账号</th><th>密码</th><th>最近上线</th><th class="ops"></th></tr></thead><tbody>`+ACCTS.map(r=>`<tr data-id="${r.id}" style="cursor:default">
+    <td><span class="nm">${esc(r.name)}</span></td><td class="pw">${esc(r.username)}</td><td class="pw">${r.password?esc(r.password):'<span class="hint">请点重置密码</span>'}</td><td>${ago(r.last_seen)}</td>
     <td class="ops"><div class="row" style="justify-content:flex-end"><button class="btn ghost small" data-op="pw">重置密码</button><button class="btn ghost small" data-op="rn">改名</button><button class="btn ghost small" data-op="del">删除</button></div></td></tr>`).join("")+`</tbody>`;
   t.querySelectorAll("button[data-op]").forEach(b=>b.onclick=()=>acctOp(+b.closest("tr").dataset.id,b.dataset.op,b))}
-async function acctOp(id,op,btn){const r=ROWS.find(x=>x.id===id),cell=btn.closest("td");
+async function acctOp(id,op,btn){const r=ACCTS.find(x=>x.id===id),cell=btn.closest("td");
   if(op==="pw"){const {data,error}=await SB.rpc("teacher_reset_password",{p_student:id});if(error){$("#appMsg").textContent=errText(error);return}
-    cell.innerHTML=`<span>新密码：<b class="pw">${esc(data)}</b>　<span class="hint">请告诉 ${esc(r.name)}，旧密码已失效</span></span>`}
+    await loadAccounts();const c=$(`#acctTbl tr[data-id="${id}"] .ops`);if(c)c.innerHTML=`<span class="msg ok">已重置，新密码 <b class="pw">${esc(data)}</b>，旧密码失效</span>`}
   if(op==="rn"){cell.innerHTML=`<form class="row" style="justify-content:flex-end;flex-wrap:nowrap"><input value="${esc(r.name)}" maxlength="20" style="width:140px"><button class="btn small">保存</button></form>`;
     const f=cell.querySelector("form");f.querySelector("input").focus();f.onsubmit=async e=>{e.preventDefault();const n=f.querySelector("input").value.trim();if(!n)return;
-      const {error}=await SB.rpc("teacher_rename_student",{p_student:id,p_name:n});if(error){$("#appMsg").textContent=errText(error);return}loadOverview()}}
+      const {error}=await SB.rpc("teacher_rename_student",{p_student:id,p_name:n});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}
   if(op==="del"){cell.innerHTML=`<div class="row" style="justify-content:flex-end"><span class="danger-q">删除 ${esc(r.name)} 和全部学习记录？</span><button class="btn danger small" data-y>确定删除</button><button class="btn ghost small" data-n>取消</button></div>`;
     cell.querySelector("[data-n]").onclick=()=>drawAcct();
-    cell.querySelector("[data-y]").onclick=async()=>{const {error}=await SB.rpc("teacher_delete_student",{p_student:id});if(error){$("#appMsg").textContent=errText(error);return}loadOverview()}}}
+    cell.querySelector("[data-y]").onclick=async()=>{const {error}=await SB.rpc("teacher_delete_student",{p_student:id});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}}
 
 (async()=>{const {data}=await SB.auth.getSession();if(!data.session){$("#loginBox").hidden=false}})();
 </script>

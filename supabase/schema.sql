@@ -311,3 +311,51 @@ revoke all on function public.teacher_create_class(text), public.teacher_add_stu
 grant execute on function public.teacher_create_class(text), public.teacher_add_students(bigint, text[]), public.teacher_reset_password(bigint),
   public.teacher_rename_student(bigint, text), public.teacher_delete_student(bigint), public.teacher_overview(bigint), public.teacher_student_detail(bigint)
   to authenticated;
+
+-- ========== 2026-11-06：老师可以随时查看学生密码 ==========
+-- 学生密码是老师生成的 6 位数字，老师需要随时能查到，所以另存一份明文 pw_view。
+-- 这一列只能经由老师函数 teacher_accounts 读取，学生端和其他老师都读不到。
+alter table public.students add column if not exists pw_view text;
+
+create or replace function public.teacher_add_students(p_class bigint, p_names text[])
+returns table (name text, username text, password text)
+language plpgsql security definer set search_path = '' as $$
+declare pre text; n int; nm text; pw text; un text;
+begin
+  if not private.owns_class(p_class) then raise exception 'NOT_YOUR_CLASS'; end if;
+  select prefix into pre from public.classes where id = p_class;
+  select coalesce(max(substr(s.username, 3)::int), 0) into n from public.students s where s.class_id = p_class;
+  foreach nm in array p_names loop
+    nm := trim(nm);
+    continue when nm = '';
+    n := n + 1;
+    un := pre || lpad(n::text, 2, '0');
+    pw := private.random_digits(6);
+    insert into public.students (class_id, name, username, pw_hash, pw_view)
+    values (p_class, left(nm, 20), un, extensions.crypt(pw, extensions.gen_salt('bf', 8)), pw);
+    name := left(nm, 20); username := un; password := pw;
+    return next;
+  end loop;
+end $$;
+
+create or replace function public.teacher_reset_password(p_student bigint) returns text
+language plpgsql security definer set search_path = '' as $$
+declare pw text := private.random_digits(6);
+begin
+  if not exists (select 1 from public.students s where s.id = p_student and private.owns_class(s.class_id)) then raise exception 'NOT_YOUR_CLASS'; end if;
+  update public.students set pw_hash = extensions.crypt(pw, extensions.gen_salt('bf', 8)), pw_view = pw, fail_count = 0, locked_until = null where id = p_student;
+  delete from private.sessions where student_id = p_student;
+  return pw;
+end $$;
+
+create or replace function public.teacher_accounts(p_class bigint)
+returns table (id bigint, name text, username text, password text, last_seen timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not private.owns_class(p_class) then raise exception 'NOT_YOUR_CLASS'; end if;
+  return query select s.id, s.name, s.username, coalesce(s.pw_view, ''), s.last_seen
+    from public.students s where s.class_id = p_class order by s.username;
+end $$;
+
+revoke all on function public.teacher_accounts(bigint) from public, anon;
+grant execute on function public.teacher_accounts(bigint) to authenticated;
