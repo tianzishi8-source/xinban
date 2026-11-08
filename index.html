@@ -1044,7 +1044,9 @@ function typeRound(o){
     <div class="acts">${o.noHint?"":`<button class="chip" id="mHint">提示一个${EN()?"词":"字"}</button>`}${o.freeSkip?'<button class="btn alt" id="mSkip">跳过，直接开始 ›</button>':'<button class="chip" id="mSkip">跳过这一步</button>'}</div>`;
   const box=$("#mType");
   const done=()=>{if(finished)return;finished=true;box.disabled=true;sfx.ok(10);burstEl($("#mVerse"),30);setTimeout(o.next,650)};
-  const draw=()=>{const {m,err}=matchTyped(box.value,target);
+  let errT=0;
+  const draw=(e,late)=>{if(e&&e.isComposing)return;clearTimeout(errT);let {m,err}=matchTyped(box.value,target);
+    if(err&&!late){const v=box.value;errT=setTimeout(()=>{if(!finished&&box.value===v)draw(null,true)},1100);err=false}
     if(err&&prevErr!==m){errAt[m]=(errAt[m]||0)+1;if(errAt[m]>=2&&!reveal.has(order[m])){reveal.add(order[m]);M.miss++}}
     prevErr=err?m:-1;
     const typedSet=new Set(order.slice(0,m)),nextI=order[m];
@@ -1094,9 +1096,10 @@ function rProof(){
     if(fixing>=0){$("#mSay").innerHTML=`找到了！这里原来是什么？把它打出来。`;
       $("#mArea").innerHTML=`<textarea id="mType" class="typebox" rows="1" style="height:64px" autocomplete="off" spellcheck="false" placeholder="打出正确的词"></textarea>`;
       const box=$("#mType"),right=errs[fixing].k.t;let prevBad=false;
-      const rt=units(right).join(" "),chk=()=>{const t=units(box.value).join(" ");
+      let badT=0;
+      const rt=units(right).join(" "),chk=(e,late)=>{if(e&&e.isComposing)return;clearTimeout(badT);const t=units(box.value).join(" ");
         if(t===rt){sfx.ok(5);const done=fixing;fixing=-1;tries=0;draw();burstEl($("#mVerse"),16)}
-        else if(t.length>=rt.length&&!rt.startsWith(t)){if(!prevBad){tries++;sfx.bad();if(tries>=2){M.miss++;box.placeholder="正确的是："+right;box.value="";$("#mSay").innerHTML=`正确的是“${esc(right)}”，照着打出来。`}}prevBad=true}else prevBad=false};
+        else if(t.length>=rt.length&&!rt.startsWith(t)){if(!late){const v=box.value;badT=setTimeout(()=>{if(box.isConnected&&box.value===v)chk(null,true)},1200);return}if(!prevBad){tries++;sfx.bad();if(tries>=2){M.miss++;box.placeholder="正确的是："+right;box.value="";$("#mSay").innerHTML=`正确的是“${esc(right)}”，照着打出来。`}}prevBad=true}else prevBad=false};
       box.addEventListener("input",chk);box.addEventListener("compositionend",chk);try{box.focus({preventScroll:true})}catch(e){}return}
     $("#mSay").innerHTML=`这份抄本里有 ${left} 处抄错了一个词。点一下抄错的地方。`;
     $("#mArea").innerHTML=`<div class="acts"><button class="chip" id="mHint">提示：在哪一句</button></div>`;
