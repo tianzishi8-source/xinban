@@ -666,6 +666,8 @@ body[data-lang="en"] .opt,body[data-lang="en"] .tile{font-family:Georgia,"Times 
 .enload>div{background:#fffaf0;border:1px solid rgba(150,105,45,.2);border-radius:14px;padding:14px 20px;font-weight:700;color:#6b4a1f;box-shadow:0 14px 30px -18px rgba(90,60,30,.6);display:flex;gap:10px;align-items:center}
 .enload .spin{width:16px;height:16px;border-radius:50%;border:3px solid #f0dcc0;border-top-color:#c4823a;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.typebox.nope{animation:shake .35s}
 </style>
 <div id="skyfx" aria-hidden="true"><div class="sun"></div><div class="cl c1"></div><div class="cl c2"></div><div class="cl c3"></div><div class="hill"></div></div>
 <div id="warmfx" aria-hidden="true"></div>
@@ -1046,7 +1048,7 @@ function typeRound(o){
   const done=()=>{if(finished)return;finished=true;box.disabled=true;sfx.ok(10);burstEl($("#mVerse"),30);setTimeout(o.next,650)};
   let errT=0;
   const draw=(e,late)=>{if(e&&e.isComposing)return;clearTimeout(errT);let {m,err}=matchTyped(box.value,target);
-    if(err&&!late){const v=box.value;errT=setTimeout(()=>{if(!finished&&box.value===v)draw(null,true)},1100);err=false}
+    if(err&&!late){const v=box.value;errT=setTimeout(()=>{if(!finished&&box.value===v)draw(null,true)},EN()?1100:2000);err=false}
     if(err&&prevErr!==m){errAt[m]=(errAt[m]||0)+1;if(errAt[m]>=2&&!reveal.has(order[m])){reveal.add(order[m]);M.miss++}}
     prevErr=err?m:-1;
     const typedSet=new Set(order.slice(0,m)),nextI=order[m];
@@ -1093,14 +1095,27 @@ function rProof(){
     $("#mVerse").innerHTML=html;
     const left=errs.length-found.size+(fixing>=0?1:0);
     if(found.size>=errs.length&&fixing<0){$("#mArea").innerHTML="";setTimeout(goNext,450);return}
-    if(fixing>=0){$("#mSay").innerHTML=`找到了！这里原来是什么？把它打出来。`;
-      $("#mArea").innerHTML=`<textarea id="mType" class="typebox" rows="1" style="height:64px" autocomplete="off" spellcheck="false" placeholder="打出正确的词"></textarea>`;
-      const box=$("#mType"),right=errs[fixing].k.t;let prevBad=false;
-      let badT=0;
-      const rt=units(right).join(" "),chk=(e,late)=>{if(e&&e.isComposing)return;clearTimeout(badT);const t=units(box.value).join(" ");
-        if(t===rt){sfx.ok(5);const done=fixing;fixing=-1;tries=0;draw();burstEl($("#mVerse"),16)}
-        else if(t.length>=rt.length&&!rt.startsWith(t)){if(!late){const v=box.value;badT=setTimeout(()=>{if(box.isConnected&&box.value===v)chk(null,true)},1200);return}if(!prevBad){tries++;sfx.bad();if(tries>=2){M.miss++;box.placeholder="正确的是："+right;box.value="";$("#mSay").innerHTML=`正确的是“${esc(right)}”，照着打出来。`}}prevBad=true}else prevBad=false};
-      box.addEventListener("input",chk);box.addEventListener("compositionend",chk);try{box.focus({preventScroll:true})}catch(e){}return}
+    if(fixing>=0){const e0=errs[fixing],right=e0.k.t,unit=EN()?"词":"字";
+      $("#mSay").innerHTML=tries>=2?`正确的是“<b>${esc(right)}</b>”，照着写出来。`:`找到了！划掉的“${esc(e0.w)}”原来是什么？写出正确的${unit}，写完点“确定”。`;
+      $("#mArea").innerHTML=`<textarea id="mType" class="typebox" rows="1" style="height:64px" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${tries>=2?"正确的是："+esc(right):"写出正确的"+unit}"></textarea>
+        <div class="acts"><button class="btn" id="mOk">确定</button>${tries>=2?'<button class="chip" id="mGive">先跳过这一处 ›</button>':""}</div>`;
+      const box=$("#mType"),rt=units(right).join(" "),W=EN()?4:2,
+        near=units(M.ch.slice(Math.max(0,e0.k.s-W),e0.k.e+W).join("")).join(" ");
+      /* 写成原文里这个位置前后的一小段（如“他造的”）也算对；别处出现的不算 */
+      const good=t=>t===rt||(t.length>rt.length&&t.includes(rt)&&near.includes(t));
+      const pass=()=>{sfx.ok(5);fixing=-1;tries=0;draw();burstEl($("#mVerse"),16)};
+      /* 写对了自动通过；写错只在点“确定”时才判，手写慢也不会被中途判错 */
+      const auto=e=>{if(e&&e.isComposing)return;if(good(units(box.value).join(" ")))pass()};
+      const submit=()=>{const t=units(box.value).join(" ");if(!t){box.focus();return}
+        if(good(t))return pass();
+        tries++;sfx.bad();box.classList.remove("nope");void box.offsetWidth;box.classList.add("nope");
+        if(tries===2)M.miss++;
+        if(tries>=2)draw();else{$("#mSay").innerHTML=`“${esc(box.value.trim())}”不对，再想想。原文这里是什么？`;box.select()}};
+      box.addEventListener("input",auto);box.addEventListener("compositionend",auto);
+      box.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();submit()}});
+      $("#mOk").onclick=submit;
+      const g=$("#mGive");if(g)g.onclick=()=>{fixing=-1;tries=0;draw()};
+      try{box.focus({preventScroll:true})}catch(e){}return}
     $("#mSay").innerHTML=`这份抄本里有 ${left} 处抄错了一个词。点一下抄错的地方。`;
     $("#mArea").innerHTML=`<div class="acts"><button class="chip" id="mHint">提示：在哪一句</button></div>`;
     $("#mVerse").querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const ei=+x.dataset.e;if(found.has(ei))return;found.add(ei);fixing=ei;sfx.ok(3);draw()});
