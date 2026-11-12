@@ -668,6 +668,45 @@ body[data-lang="en"] .opt,body[data-lang="en"] .tile{font-family:Georgia,"Times 
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .typebox.nope{animation:shake .35s}
+
+/* 补全句子 */
+.erasebox{display:inline;padding:2px 4px;margin:0 2px;border-radius:8px;outline:2px dashed rgba(196,130,58,.55);outline-offset:1px;background:rgba(255,246,228,.6)}
+.typebox.nope{animation:shake .35s}
+/* 对战：竞技场 */
+body[data-screen="duel"] #skyfx,body[data-screen="duelPick"] #skyfx{--bgveil:radial-gradient(120% 70% at 50% 0%,rgba(255,170,60,.28),rgba(0,0,0,0) 55%),linear-gradient(180deg,rgba(38,14,36,.78),rgba(18,16,46,.9))}
+body[data-screen="duel"] .top,body[data-screen="duelPick"] .top{background:rgba(255,248,236,.92)}
+body[data-screen="duelPick"] .panel h2{font-size:34px;background:linear-gradient(90deg,#2c84d8,#c43a5c,#f08a17);-webkit-background-clip:text;background-clip:text;color:transparent}
+.duelTop{background:linear-gradient(90deg,#1f6fd1 0%,#3d8ff0 48%,#ff7a1a 52%,#f05a0a 100%)!important;border:2px solid rgba(255,255,255,.85)!important;box-shadow:0 0 0 3px rgba(255,210,120,.25),0 10px 30px -6px rgba(255,120,40,.55),0 10px 30px -6px rgba(40,120,255,.55)!important}
+.duelTop.hit{animation:dpop .45s}
+.duelTop .vs{background:radial-gradient(circle at 35% 30%,#fff3b0,#ffb21f 55%,#e07800)!important;box-shadow:0 0 18px rgba(255,190,60,.9)!important;animation:vsglow 1.2s ease-in-out infinite}
+.duelTop small{color:rgba(255,240,220,.85)!important}
+.dtimer{height:10px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden;margin-top:30px;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.dtimer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffd35a,#ff9a2a);transition:width .1s linear}
+.dtimer i.hot{background:linear-gradient(90deg,#ff5a5a,#ff2a55);animation:hot .4s ease-in-out infinite alternate}
+.dtimer+.duelQ{margin-top:10px}
+body[data-screen="duel"] .duelQ{border:2px solid rgba(255,200,110,.7);box-shadow:0 0 0 4px rgba(255,190,80,.15),0 18px 40px -16px rgba(0,0,0,.7)}
+body[data-screen="duel"] .half{border:0;position:relative}
+body[data-screen="duel"] .half.a{background:linear-gradient(180deg,#d9ebff,#fffdf7 55%);box-shadow:0 0 0 3px #3d8ff0,0 0 26px rgba(61,143,240,.55)}
+body[data-screen="duel"] .half.b{background:linear-gradient(180deg,#ffe3cc,#fffdf7 55%);box-shadow:0 0 0 3px #ff7a1a,0 0 26px rgba(255,122,26,.55)}
+body[data-screen="duel"] .half.locked{filter:grayscale(.7) brightness(.8)}
+body[data-screen="duel"] .half .opt{font-weight:700}
+.race .bar{height:16px!important;background:rgba(0,0,0,.12)!important}
+.half.a .bar i{background:linear-gradient(90deg,#1f6fd1,#6fb4ff)!important}.half.b .bar i{background:linear-gradient(90deg,#f05a0a,#ffb15a)!important}
+.cdown{position:fixed;inset:0;display:grid;place-items:center;z-index:70;pointer-events:none}
+.cdown b{font-family:var(--f-head);font-size:min(38vw,220px);color:#fff;text-shadow:0 0 30px rgba(255,170,60,.9),0 8px 0 rgba(0,0,0,.25);animation:cd .65s ease-out}
+.cdown b.go{font-size:min(20vw,120px);color:#ffe27a}
+.mpoint{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:70;font-family:var(--f-head);font-weight:900;font-size:min(11vw,64px);color:#fff;padding:10px 28px;border-radius:20px;pointer-events:none;animation:mp 1.4s ease-out forwards;white-space:nowrap}
+.mpoint.a{background:linear-gradient(90deg,#1f6fd1,#3d8ff0);box-shadow:0 0 40px rgba(61,143,240,.9)}.mpoint.b{background:linear-gradient(90deg,#f05a0a,#ff7a1a);box-shadow:0 0 40px rgba(255,122,26,.9)}
+body.dshake main{animation:dshake .28s}
+@keyframes cd{0%{transform:scale(2.2);opacity:0}40%{opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes mp{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}15%{transform:translate(-50%,-50%) scale(1.12);opacity:1}25%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%) scale(1)}}
+@keyframes dpop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes vsglow{50%{box-shadow:0 0 30px rgba(255,190,60,1)}}
+@keyframes hot{to{opacity:.6}}
+@keyframes dshake{0%,100%{transform:none}25%{transform:translate(-4px,2px)}50%{transform:translate(4px,-2px)}75%{transform:translate(-2px,1px)}}
+@media (prefers-reduced-motion:reduce){body.dshake main,.cdown b,.mpoint,.duelTop.hit{animation:none}}
+
+#packTabs button{white-space:nowrap}
 </style>
 <div id="skyfx" aria-hidden="true"><div class="sun"></div><div class="cl c1"></div><div class="cl c2"></div><div class="cl c3"></div><div class="hill"></div></div>
 <div id="warmfx" aria-hidden="true"></div>
@@ -704,7 +743,7 @@ body[data-lang="en"] .opt,body[data-lang="en"] .tile{font-family:Georgia,"Times 
     <div class="langsw" id="langSw" role="group" aria-label="圣经版本"><button data-l="zh"><b>中文</b><small>和合本</small></button><button data-l="en"><b>English</b><small>ESV</small></button></div>
     <div class="panel">
       <div class="row" style="justify-content:space-between;align-items:center"><div><h2>经文包：<span id="packName"></span></h2><span class="hint" id="packCount"></span></div><button class="btn alt" id="packToggle" style="padding:8px 16px;font-size:14px">换经文包</button></div>
-      <div class="tabsw" id="packTabs" hidden><button data-k="book">书卷</button><button data-k="lesson">课程</button><button data-k="src">资料</button><button data-k="search">搜索</button></div>
+      <div class="tabsw" id="packTabs" hidden><button data-k="book">书卷</button><button data-k="lesson">课程</button><button data-k="src">资料</button><button data-k="text">祷文·信经</button><button data-k="search">搜索</button></div>
       <div id="packBody" class="packBody" hidden></div>
     </div>
     <div class="pillars">
@@ -881,7 +920,33 @@ $("#nick").value=store.get("xb-nick","");$("#nick").oninput=()=>store.set("xb-ni
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1100)}
 
 let stopNow=()=>{};
-function show(id){stopNow();stopNow=()=>{};document.body.dataset.screen=id;["home","map","teacher","mem","test","duelPick","duel","result","board","import"].forEach(s=>$("#"+s).hidden=s!==id);
+
+/* ===== 对战背景音乐：小调低音 + 鼓点，比分越接近终点越快、越密 ===== */
+const midi=n=>440*Math.pow(2,(n-69)/12);
+const BGM={on:false,iv:0,next:0,step:0,heat:0,noise:null,master:null,
+  start(){if(!sound||this.on)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume()}catch(e){return}
+    if(!this.noise){const b=AC.createBuffer(1,AC.sampleRate*.5,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;this.noise=b}
+    this.on=true;this.step=0;this.heat=0;this.master=AC.createGain();this.master.gain.value=.5;this.master.connect(AC.destination);
+    this.next=AC.currentTime+.08;this.iv=setInterval(()=>this.tick(),25)},
+  stop(){if(!this.on)return;this.on=false;clearInterval(this.iv);const g=this.master;try{g.gain.setTargetAtTime(0,AC.currentTime,.12);setTimeout(()=>{try{g.disconnect()}catch(e){}},700)}catch(e){}},
+  setHeat(h){this.heat=Math.max(0,Math.min(1,h))},
+  tick(){if(!sound){this.stop();return}const sp=60/(124+this.heat*40)/4;
+    while(this.next<AC.currentTime+.12){this.play(this.step,this.next,sp);this.next+=sp;this.step=(this.step+1)%32}},
+  env(node,t,peak,dur){const g=AC.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+dur);node.connect(g).connect(this.master);return g},
+  play(s,t,sp){const h=this.heat;
+    if(s%4===0){const o=AC.createOscillator();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);this.env(o,t,.9,.16);o.start(t);o.stop(t+.2)}
+    if(h>.25&&s%8===4){const n=AC.createBufferSource();n.buffer=this.noise;const f=AC.createBiquadFilter();f.type="bandpass";f.frequency.value=1800;n.connect(f);this.env(f,t,.35,.12);n.start(t);n.stop(t+.15)}
+    {const n=AC.createBufferSource();n.buffer=this.noise;const f=AC.createBiquadFilter();f.type="highpass";f.frequency.value=7000;n.connect(f);this.env(f,t,s%2?.05:.1,.04);n.start(t);n.stop(t+.06)}
+    if(s%2===0){const B=[45,45,57,45,43,45,52,43,45,45,57,48,50,48,47,44],o=AC.createOscillator(),f=AC.createBiquadFilter();o.type="sawtooth";o.frequency.value=midi(B[Math.floor(s/2)%16]);f.type="lowpass";f.frequency.value=380+h*900;o.connect(f);this.env(f,t,.16,sp*1.7);o.start(t);o.stop(t+sp*2)}
+    if(h>.55&&s%4===2){const A=[69,72,76,79,76,72,69,64],o=AC.createOscillator();o.type="square";o.frequency.value=midi(A[Math.floor(s/4)%8]+(h>.85?12:0));this.env(o,t,.045,.09);o.start(t);o.stop(t+.12)}}};
+function countdown(box,cb){let n=3;const ov=document.createElement("div");ov.className="cdown";box.appendChild(ov);
+  const go=()=>{if($("#duel").hidden){ov.remove();return}
+    if(n>0){ov.innerHTML=`<b>${n}</b>`;tone([660],.12,"square");n--;setTimeout(go,650)}
+    else{ov.innerHTML=`<b class="go">开始！</b>`;tone([880,1320],.2,"square",.06);setTimeout(()=>{ov.remove();cb()},450)}};go()}
+function heatPing(k,score,goal){const dt=$(".duelTop");if(dt){dt.classList.remove("hit");void dt.offsetWidth;dt.classList.add("hit")}
+  document.body.classList.remove("dshake");void document.body.offsetWidth;document.body.classList.add("dshake");
+  if(score===goal-1){const m=document.createElement("div");m.className="mpoint "+k;m.textContent=(k==="a"?"蓝营":"橙营")+" 赛点！";$("#duelBox").appendChild(m);setTimeout(()=>m.remove(),1400);tone([784,988,1175],.18,"square",.07)}}
+function show(id){if(id!=="duel"){BGM.stop();if(DQ&&DQ.iv){clearInterval(DQ.iv);DQ.iv=0}document.body.classList.remove("dshake")}stopNow();stopNow=()=>{};document.body.dataset.screen=id;["home","map","teacher","mem","test","duelPick","duel","result","board","import"].forEach(s=>$("#"+s).hidden=s!==id);
   $("#homeBtn").hidden=id==="home";scrollTo({top:0});if(id==="home")renderHome()}
 $("#homeBtn").onclick=()=>show("home");
 const CN="一二三四五六七八九十";const cnNum=t=>{const m=t.match(/第([一二三四五六七八九十]+)课/);if(!m)return 99;const x=m[1];if(x==="十")return 10;if(x.startsWith("十"))return 10+CN.indexOf(x[1])+1;if(x.endsWith("十"))return (CN.indexOf(x[0])+1)*10;return CN.indexOf(x)+1};
@@ -911,7 +976,44 @@ async function ensureEn(list){if(!EN())return true;const need=uniq(list.filter(v
 const needEn=async list=>{if(!EN())return true;if(enLoading)await enLoading;enLoading=ensureEn(list);const ok=await enLoading;enLoading=null;return ok};
 function setLang(l){if(l===LANG)return;LANG=l;store.set("xb-lang",l);document.body.dataset.lang=l;GKEYS=null;buildAll();
   if(!setPack(PACK)||!LIB.length)setPack({kind:"book",key:"约翰福音"});renderHome();if(EN())needEn(LIB).then(()=>renderHome())}
-function buildAll(){if(EN()){ALL=DATA.map((d,i)=>{const B=BOOKS[d[0]],r=(EN_BOOK[B[0]]||B[0])+" "+d[1];
+
+/* ===== 主祷文、使徒信经：按行逐级闯关 ===== */
+const TEXTS=[
+ {key:"主祷文",en:"The Lord's Prayer",zhT:[1,2,3,0],enT:[2,4,8,0],
+  zh:["我们在【天上|处】的【父|人】，愿人都尊你的【名|物】为【圣|修】。",
+      "愿你的【国|物】【降临|动】。愿你的【旨意|物】行在【地上|处】，如同行在【天上|处】。",
+      "我们【日用|修】的【饮食|物】，【今日|修】【赐给|动】我们。",
+      "【免|动】我们的【债|物】，如同我们免了人的债。",
+      "不叫我们【遇见|动】【试探|物】，【救|动】我们【脱离|动】【凶恶|物】。",
+      "因为【国度|物】、【权柄|物】、【荣耀|物】，全是你的，直到【永远|修】，【阿们|修】。"],
+  enL:["Our father in heaven,","Hallowed be Your name.","Your kingdom come,","Your will be done,","On earth as it is in heaven.","Give us today our daily bread.","Forgive us our sins,","As we forgive those who sin against us.","Lead us not into temptation,","But deliver us from evil.","For the kingdom, the power","And the glory are Yours.","Now and for ever. Amen."]},
+ {key:"使徒信经",en:"The Apostles' Creed",zhT:[1,2,4,0],enT:[1,2,4,0],
+  zh:["我信【上帝|人】，【全能|修】的【父|人】，【创造|动】【天地|处】的主；",
+      "我信我主【耶稣基督|人】，上帝【独生|修】的【子|人】；",
+      "因【圣灵|人】【感孕|动】，由【童贞女|人】【马利亚|人】所生；",
+      "在【本丢彼拉多|人】手下【受难|动】，",
+      "被钉于【十字架|物】上，【受死|动】，【埋葬|动】；降在【阴间|处】，【第三天|修】从【死人|人】中【复活|动】；",
+      "【升天|动】，坐在全能父上帝的【右边|处】；",
+      "将来必从那里【降临|动】，【审判|动】【活人|人】【死人|人】。",
+      "我信【圣灵|人】；我信【圣而公|修】之【教会|物】；",
+      "我信【圣徒相通|物】。我信【罪得赦免|物】；",
+      "我信【身体复活|物】；我信【永生|物】。阿们。"],
+  enL:["I believe in God, the Father almighty, creator of heaven and earth.","I believe in Jesus Christ, his only Son, our Lord,","who was conceived by the Holy Spirit and born of the virgin Mary.","He suffered under Pontius Pilate, was crucified, died, and was buried;","he descended to hell. The third day he rose again from the dead.","He ascended to heaven and is seated at the right hand of God the Father almighty.","From there he will come to judge the living and the dead.","I believe in the Holy Spirit, the holy catholic church,","the communion of saints, the forgiveness of sins,","the resurrection of the body, and the life everlasting. Amen."]}];
+/* 按 size 行一组；最后剩下太少（不到半组，或只剩 1 行）就并进前一组；size=0 表示全文 */
+function lineChunks(n,size){if(!size||size>=n)return [[0,n-1]];const out=[];for(let a=0;a<n;a+=size)out.push([a,Math.min(n,a+size)-1]);
+  const last=out[out.length-1],r=last[1]-last[0]+1;if(out.length>1&&(r<size/2||(r===1&&size>1))){out.pop();out[out.length-1][1]=n-1}return out}
+let TEXTV=[];
+function buildTexts(){TEXTV=TEXTS.flatMap(T=>{const L=EN()?T.enL:T.zh,tiers=EN()?T.enT:T.zhT,name=EN()?T.en:T.key,seen=new Set();
+  return tiers.flatMap(sz=>{const cs=lineChunks(L.length,sz),last=cs[cs.length-1];
+    /* 最后一组和前面某一关重复时，改成取最后 sz 行（与上一组有重叠） */
+    if(cs.length>1&&seen.has(last.join("-")))cs[cs.length-1]=[L.length-sz,L.length-1];
+    cs.forEach(c=>seen.add(c.join("-")));return cs.map(c=>[c[0],c[1],sz])}).map(([a,b,sz])=>{
+    const all=sz===0||(a===0&&b===L.length-1),lab=all?(EN()?"Full":"全文"):a===b?`L${a+1}`:`L${a+1}-${b+1}`,ref=name+" "+lab;
+    const tier=all?"整篇":({1:"单行",2:"两行",3:"三行",4:"四行",5:"五行",8:"八行"})[b-a+1]||(b-a+1)+"行";
+    const v={id:"t:"+ref,book:T.key,abbr:"",t:"祷文",ref,full:name+" · "+(all?"全文":a===b?`第 ${a+1} 行`:`第 ${a+1}–${b+1} 行`),chk:false,src:[],isText:true,tier};
+    if(EN()){const text=L.slice(a,b+1).map(x=>x.trim()).join(" ");return {...v,zh:text,vb:[],keys:enKeys(tokEn(text)),mk:""}}
+    return prep({...v,mk:L.slice(a,b+1).join("")})})})}
+function buildAll(){buildTexts();if(EN()){ALL=DATA.map((d,i)=>{const B=BOOKS[d[0]],r=(EN_BOOK[B[0]]||B[0])+" "+d[1];
       return fillEn({id:i,book:B[0],abbr:EN_BOOK[B[0]]||"",t:B[2],ref:r,full:r,chk:false,src:d[4].map(j=>SRCS[j]),zh:"",keys:[],vb:[],mk:""},ENTXT[r])});CUSTOM=[];return}
   ALL=DATA.map((d,i)=>{const B=BOOKS[d[0]];return prep({id:i,book:B[0],abbr:B[1],t:B[2],ref:B[1]+" "+d[1],full:B[0]+" "+d[1],chk:!!d[2],mk:d[3],src:d[4].map(j=>SRCS[j])})});
   CUSTOM=(store.get("xb5-custom",[])||[]).map((v,i)=>prep({...v,id:"c"+i,book:"我导入的",abbr:"",t:"",full:v.ref,src:[]}))}
@@ -919,13 +1021,14 @@ function packList(k){
   if(k.kind==="book")return ALL.filter(v=>v.book===k.key);
   if(k.kind==="src")return ALL.filter(v=>v.src.includes(k.key));
   if(k.kind==="custom")return CUSTOM;
+  if(k.kind==="text")return TEXTV.filter(v=>v.book===k.key);
   if(k.kind==="search"){const q=k.key.replace(/\s/g,"");if(!q)return [];return ALL.filter(v=>v.zh.includes(q)||v.ref.replace(/\s/g,"").includes(q)||v.full.replace(/\s/g,"").includes(q)).slice(0,200)}
   return []}
-const packTitle=k=>k.kind==="search"?`搜索“${k.key}”`:k.kind==="custom"?"我导入的":k.key;
+const packTitle=k=>k.kind==="text"?(EN()?(TEXTS.find(t=>t.key===k.key)||{}).en||k.key:k.key):k.kind==="search"?`搜索“${k.key}”`:k.kind==="custom"?"我导入的":k.key;
 function setPack(k){const l=packList(k);if(!l.length)return false;PACK=k;LIB=l;sel=0;UNITS=unitsOf(l);store.set("xb5-pack",k);return true}
 let packTab="book",showAll=false,packOpen=false;
 function renderPacks(){
-  $("#packName").textContent=packTitle(PACK);$("#packCount").textContent=`${LIB.length} 条 · 已刻 ${LIB.filter(v=>MEM[v.ref]).length}`;
+  $("#packName").textContent=packTitle(PACK);$("#packCount").textContent=PACK.kind==="text"?`${LIB.length} 关 · 已过 ${LIB.filter(v=>MEM[v.ref]).length}`:`${LIB.length} 条 · 已刻 ${LIB.filter(v=>MEM[v.ref]).length}`;
   $("#packTabs").hidden=$("#packBody").hidden=!packOpen;$("#packToggle").textContent=packOpen?"收起":"换经文包";
   $("#packTabs").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===packTab));
   const chip=(kind,key,label,n)=>`<button class="pk${PACK.kind===kind&&PACK.key===key?" on":""}" data-kind="${kind}" data-key="${esc(key)}">${esc(label)}<small>${n}</small></button>`;
@@ -935,6 +1038,7 @@ function renderPacks(){
   else if(packTab==="lesson"){for(const [n,label] of [["n1","n1 背诵经文（第一至十二课）"],["n2","n2 背诵经文（以“耶稣基督”为主题）"]]){
       const ls=SRCS.filter(x=>x.startsWith(n+" ")).sort((a,b)=>cnNum(a)-cnNum(b));
       html+=`<div class="pkrow"><span class="lbl">${label}</span>${ls.map(x=>chip("src",x,x.replace(/^n\d 背诵经文·/,""),ALL.filter(v=>v.src.includes(x)).length)).join("")}</div>`}}
+  else if(packTab==="text"){html=`<div class="pkrow">${TEXTS.map(T=>chip("text",T.key,EN()?T.en:T.key,TEXTV.filter(v=>v.book===T.key).length)).join("")}</div><p class="hint">先过单行的关，再过${EN()?"更长":"两行、三四行"}的关，最后背全文。</p>`}
   else if(packTab==="src"){const ls=SRCS.filter(x=>!/^n\d /.test(x));
       html+=`<div class="pkrow">${ls.map(x=>chip("src",x,x,ALL.filter(v=>v.src.includes(x)).length)).join("")}${CUSTOM.length?chip("custom","我导入的","我导入的",CUSTOM.length):""}</div>`}
   else{html=`<input class="search" id="searchBox" placeholder="输入经文里的词或出处，例如：好牧人、约 3:16" value="${PACK.kind==="search"?esc(PACK.key):""}"><p class="hint">按回车，搜到的经文会组成一个临时经文包（最多 200 条）。</p><p class="msg err" id="searchMsg"></p>`}
@@ -969,7 +1073,7 @@ function segVerse(v,i){const g=segsOf(v)[i],ch=tok(v.zh);
   return {...v,zh:ch.slice(g.s,g.e).join(""),keys:(v.keys||[]).filter(k=>k.s>=g.s&&k.e<=g.e).map(k=>({...k,s:k.s-g.s,e:k.e-g.s})),vb:[],segLabel:g.label,parent:v,seg:i}}
 const segKey=(v,i)=>v.ref+"#"+i;
 function segDone(v){const n=segsOf(v).length;if(n<2)return MEM[v.ref]?1:0;let c=0;for(let i=0;i<n;i++)if(MEM[segKey(v,i)])c++;return c}
-function unitsOf(list){return list.flatMap(v=>{const g=segsOf(v);return g.length>1?g.map((x,i)=>({v,seg:i,key:segKey(v,i),ref:v.ref,sub:x.label})):[{v,seg:null,key:v.ref,ref:v.ref,sub:""}]})}
+function unitsOf(list){return list.flatMap(v=>{const g=segsOf(v);return g.length>1?g.map((x,i)=>({v,seg:i,key:segKey(v,i),ref:v.ref,sub:x.label})):[{v,seg:null,key:v.ref,ref:v.ref,sub:v.tier||""}]})}
 const unitVerse=u=>u.seg==null?u.v:segVerse(u.v,u.seg);
 const raceVerse=()=>{const u=UNITS[Math.min(CUR,UNITS.length-1)];return u?unitVerse(u):LIB[0]};
 const firstOpen=()=>{const i=UNITS.findIndex(u=>!MEM[u.key]);return i<0?UNITS.length-1:i};
@@ -998,17 +1102,18 @@ function drawMode(){$("#modeN").setAttribute("aria-pressed",MODE==="normal");$("
 document.querySelectorAll(".modesw button").forEach(b=>b.onclick=()=>{MODE=b.dataset.m;store.set("xb-mode",MODE);drawMode();sfx.step()});
 /* ===== 一关：普通（填空、纠错多来几遍，少打字）/ 高阶（背整句） ===== */
 const PLANS={
-  normal:[["抄","抄一遍",()=>rCopy(true)],["选","选词",()=>rChoose(3)],["拼","拼词",()=>rBank(4)],["校","找错",()=>rProof()],["选","再选一次",()=>rChoose(4)],["校","再找一次",()=>rProof()],["填","填空",()=>rType(2)],["印","认出处",()=>rStamp()]],
+  normal:[["抄","抄一遍",()=>rCopy(true)],["选","选词",()=>rChoose(3)],["拼","拼词",()=>rBank(4)],["补","补全句子",()=>rErase()],["选","再选一次",()=>rChoose(4)],["补","再补一句",()=>rErase()],["填","填空",()=>rType(2)],["印","认出处",()=>rStamp()]],
   adv:[["默","默写整节",()=>rDictate()],["印","盖印",()=>rSeal()]]};
 let MODE=store.get("xb-mode","normal");if(!PLANS[MODE])MODE="normal";
 let ADV=store.get("xb-adv",{});
 let M=null;
-const PLAN=()=>PLANS[M.mode];
+/* 主祷文、信经没有“出处”可认，最后一步改成直接盖印 */
+const PLAN=()=>M.v.isText?PLANS[M.mode].map(x=>x[0]==="印"&&M.mode==="normal"?["印","盖印",()=>rSeal()]:x):PLANS[M.mode];
 function goNext(){goRound(M.step+1)}
 function playLevel(i){CUR=i;const u=UNITS[i],v=unitVerse(u);sel=Math.max(0,LIB.indexOf(u.v));
-  M={i,u,v,ch:tok(v.zh),ps:phrases(v.zh),step:0,miss:0,mode:MODE,used:new Set(),score:0,combo:0,best:0,done:false};show("mem");lvHud();
+  M={i,u,v,ch:tok(v.zh),ps:phrases(v.zh),step:0,miss:0,mode:MODE,used:new Set(),erased:new Set(),score:0,combo:0,best:0,done:false};show("mem");lvHud();
   $("#lvTitle").textContent=`第 ${i+1} 关`+(MODE==="adv"?" · 高阶":"");
-  $("#mRef").innerHTML=esc(u.v.full)+(EN()?'<span class="chk esvb">ESV</span>':"")+(u.sub?`<span class="chk" style="background:#e3f1f8;color:var(--deep)">${esc(u.sub)}</span>`:"")+(u.v.chk?'<span class="chk">待核对</span>':"");showStart()}
+  $("#mRef").innerHTML=esc(u.v.full)+(EN()&&!u.v.isText?'<span class="chk esvb">ESV</span>':"")+(u.sub?`<span class="chk" style="background:#e3f1f8;color:var(--deep)">${esc(u.sub)}</span>`:"")+(u.v.chk?'<span class="chk">待核对</span>':"");showStart()}
 function showStart(){const u=M.u;$("#tablet").dataset.stage=0;$("#mVerse").textContent=M.v.zh;$("#mSay").textContent="";$("#mArea").innerHTML="";M.step=-1;drawSteps();
   $("#lsNum").textContent=M.i+1;$("#lsRef").textContent=u.v.full+(u.sub?" · "+u.sub:"");
   $("#lsMode").textContent=M.mode==="adv"?"高阶训练 · 只看出处，默写整节经文":`普通训练 · ${PLAN().length} 步`;
@@ -1083,6 +1188,48 @@ function rBank(n){const bl=pickRand(n||5);let k=0;
     $("#mArea").querySelectorAll(".tile").forEach(b=>b.onclick=()=>{if(k>=bl.length)return;const x=tiles.find(y=>y.i===+b.dataset.i);if(!x||x.used)return;
       if(x.t===bl[k].t){x.used=true;k++;sfx.ok(k);burstEl(b,10);draw()}
       else{M.miss++;sfx.bad();b.classList.add("wrong","shake");setTimeout(()=>b.classList.remove("wrong","shake"),400)}})};draw()}
+
+/* ===== 补：擦去一句重要的话，让学生补全。提示一：只露出非核心词 2 秒；提示二：整句露出 3 秒 ===== */
+function rErase(){const ch=M.ch,ks=keysOf(M.v),unit=EN()?"词":"字";
+  const cand=M.ps.map((p,i)=>{let s=p.s,e=p.e;while(s<e&&!isW(ch[s]))s++;while(e>s&&!isW(ch[e-1]))e--;
+      const n=ch.slice(s,e).filter(isW).length,kk=ks.filter(k=>k.cat!=="句"&&k.s>=s&&k.e<=e);return {i,s,e,n,kk}})
+    .filter(c=>c.n>=3);
+  if(!cand.length)return goNext();
+  const fresh=cand.filter(c=>!M.erased.has(c.i)),pool=fresh.length?fresh:cand;
+  const c=pool.map(x=>({...x,sc:x.kk.length*2+Math.min(x.n,14)/4+Math.random()*1.5})).sort((a,b)=>b.sc-a.sc)[0];M.erased.add(c.i);
+  const idx=[];for(let i=c.s;i<c.e;i++)if(isW(ch[i]))idx.push(i);
+  const target=idx.map(i=>nrm(ch[i])),right=ch.slice(c.s,c.e).join("");
+  /* 核心词：标注过的挖空词；英文没有标注时取最长的几个词 */
+  let core=new Set();c.kk.forEach(k=>{for(let i=k.s;i<k.e;i++)core.add(i)});
+  if(!core.size){[...idx].sort((a,b)=>ch[b].length-ch[a].length).slice(0,Math.max(1,Math.round(idx.length*.4))).forEach(i=>core.add(i))}
+  let peek=0,tries=0,hint1=false,hint2=false,done=false,peekT=0;
+  const draw=()=>{const {m}=matchTyped(box.value,target),got=new Set(idx.slice(0,m));let h="";
+    for(let i=0;i<ch.length;i++){
+      if(i===c.s)h+='<span class="erasebox">';
+      if(i>=c.s&&i<c.e&&isW(ch[i])){let cl=got.has(i)?" typed":peek===2||(peek===1&&!core.has(i))?" hintc":" gone";h+=`<span class="ch${cl}">${esc(ch[i])}</span>`}
+      else h+=`<span class="ch">${esc(ch[i])}</span>`;
+      if(i===c.e-1)h+='</span>'}
+    $("#mVerse").innerHTML=h;
+    $("#mSay").innerHTML=tries>=2?`正确的是“<b>${esc(core0(right))}</b>”，照着写出来。`:`有一句被擦掉了，把它补出来。写完点“确定”。 <b>${m} / ${target.length}</b>`};
+  const core0=t=>t.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,"");
+  $("#mArea").innerHTML=`<textarea id="mType" class="typebox" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="写出被擦掉的这一句（标点${EN()?"、大小写":""}不用管）"></textarea>
+    <div class="acts"><button class="btn" id="mOk">确定</button><button class="chip" id="mH1">提示一 · 看 2 秒</button><button class="chip" id="mH2">提示二 · 看整句 3 秒</button></div>`;
+  const box=$("#mType");
+  const finish=()=>{if(done)return;done=true;clearTimeout(peekT);peek=0;box.value=right;draw();box.disabled=true;sfx.ok(8);burstEl($("#mVerse"),24);setTimeout(goNext,700)};
+  const auto=e=>{if(e&&e.isComposing)return;const {m}=matchTyped(box.value,target);if(m>=target.length)finish();else draw()};
+  const submit=()=>{if(done)return;const t=units(box.value);if(!t.length){box.focus();return}
+    const {m}=matchTyped(box.value,target);if(m>=target.length)return finish();
+    tries++;sfx.bad();box.classList.remove("nope");void box.offsetWidth;box.classList.add("nope");
+    if(tries===2){M.miss++;box.placeholder="正确的是："+core0(right);
+      const a=$("#mArea .acts");if(a&&!$("#mGive"))a.insertAdjacentHTML("beforeend",'<button class="chip" id="mGive">先跳过 ›</button>');
+      $("#mGive").onclick=()=>{M.miss++;finish()}}
+    draw();if(tries===1)$("#mSay").innerHTML=`还不对，从第 <b>${m+1}</b> 个${unit}开始再想想。`};
+  const showPeek=(lv,ms)=>{clearTimeout(peekT);peek=lv;draw();peekT=setTimeout(()=>{peek=0;if(!done)draw()},ms)};
+  $("#mH1").onclick=()=>{if(hint1)return;hint1=true;$("#mH1").disabled=true;showPeek(1,2000)};
+  $("#mH2").onclick=()=>{if(hint2)return;hint2=true;$("#mH2").disabled=true;M.miss++;showPeek(2,3000)};
+  box.addEventListener("input",auto);box.addEventListener("compositionend",auto);
+  box.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();submit()}});
+  $("#mOk").onclick=submit;draw();try{box.focus({preventScroll:true})}catch(e){}}
 function rProof(){
   const ks=KEYS(),n=(EN()?units(M.v.zh).length>28:[...M.v.zh].length>60)&&ks.length>=4?2:1;
   const errs=makeErrs(ks,n);
@@ -1191,8 +1338,8 @@ function clipRange(ps,pi,len,cap){cap=cap||(EN()?44:36);let a=pi,b=pi;
   return [ps[a].s,ps[b].e]}
 function makeQ(pool,noOrder){
   const v=rnd(pool),ps=phrases(v.zh),cs=keysOf(v);
-  let types=["blank","blank","next","ref"];if(ps.length>=3&&!noOrder)types.push("order");
-  if(ps.length<2)types=types.filter(x=>x!=="next");
+  let types=["blank","blank","next","ref"];if(v.isText)types=types.filter(x=>x!=="ref");if(ps.length>=3&&!noOrder)types.push("order");
+  if(ps.length<2)types=types.filter(x=>x!=="next");if(!types.length)types=["blank"];
   const t=rnd(types);
   if(t==="blank"){const c=rnd(cs),ch=tok(v.zh);let pi=ps.findIndex(p=>p.s<=c.s&&c.s<p.e);if(pi<0)pi=0;
     let [a,b]=clipRange(ps,pi);b=Math.max(b,c.e);const D='<span class="dim">……</span>';
@@ -1271,32 +1418,40 @@ const WIN=7;let DQ=null;
 const DKEY={a:["1","2","3","4"],b:["7","8","9","0"]};
 addEventListener("keydown",e=>{if($("#duel").hidden||e.repeat||e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
   for(const k of ["a","b"]){const j=DKEY[k].indexOf(e.key);if(j<0)continue;const h=$("#h-"+k);if(!h)return;const b=h.querySelectorAll(".opt")[j];if(b){e.preventDefault();b.click()}return}});
-$("#dQuiz").onclick=()=>{DQ={a:0,b:0};show("duel");dqNext()};$("#dRace").onclick=()=>startRace();
-function dqNext(){
-  const q=makeQ(LIB,true);DQ.q=q;DQ.lock={};DQ.done=false;
+$("#dQuiz").onclick=()=>{DQ={a:0,b:0};show("duel");$("#duelBox").innerHTML="";BGM.start();countdown($("#duelBox"),dqNext)};$("#dRace").onclick=()=>startRace();
+const DQT=12;
+function dqNext(){if(DQ.iv){clearInterval(DQ.iv);DQ.iv=0}
+  const q=makeQ(LIB,true);DQ.q=q;DQ.lock={};DQ.done=false;BGM.setHeat(Math.max(DQ.a,DQ.b)/(WIN-1));
   const half=k=>`<div class="half ${k}" id="h-${k}"><h4>${k==="a"?"蓝营":"橙营"}</h4><div class="opts">${shuffle(q.opts).map((o,j)=>`<button class="opt" data-v="${esc(o)}"><kbd>${DKEY[k][j]}</kbd>${esc(o)}</button>`).join("")}</div><div class="lk" id="lk-${k}"></div></div>`;
   $("#duelBox").innerHTML=`<div class="duelTop"><span class="a">${DQ.a}</span><i class="vs">VS</i><span class="b">${DQ.b}</span><small>先到 ${WIN} 分</small></div>
+    <div class="dtimer"><i id="dqBar"></i></div>
     <div class="duelQ"><span class="qtype">${q.type}</span><p class="qtext"${q.small?' style="font-size:18px"':""}>${q.html}</p></div><div class="halves">${half("a")}${half("b")}</div>`;
+  const t0=Date.now();let lastBeep=99;
+  DQ.iv=setInterval(()=>{if($("#duel").hidden||DQ.done){clearInterval(DQ.iv);DQ.iv=0;return}const left=DQT-(Date.now()-t0)/1000,bar=$("#dqBar");
+    if(bar){bar.style.width=Math.max(0,left/DQT*100)+"%";bar.classList.toggle("hot",left<=4)}
+    const sec=Math.ceil(left);if(sec<=3&&sec>0&&sec<lastBeep){lastBeep=sec;tone([sec===1?1200:900],.07,"square")}
+    if(left<=0){clearInterval(DQ.iv);DQ.iv=0;DQ.done=true;sfx.bad();["a","b"].forEach(k=>{$("#lk-"+k).textContent="时间到！";$("#h-"+k).querySelectorAll(".opt").forEach(x=>{if(x.dataset.v===q.ans)x.classList.add("right")})});
+      setTimeout(()=>{if(!$("#duel").hidden)dqNext()},1500)}},100);
   ["a","b"].forEach(k=>$("#h-"+k).querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(DQ.done||DQ.lock[k])return;
-    if(b.dataset.v===q.ans){DQ.done=true;DQ[k]++;b.classList.add("right");sfx.ok(DQ[k]);burstEl(b,20,k==="a"?["#2c84d8","#fff"]:["#f08a17","#fff"]);
+    if(b.dataset.v===q.ans){DQ.done=true;DQ[k]++;heatPing(k,DQ[k],WIN);BGM.setHeat(DQ[k]/(WIN-1));b.classList.add("right");sfx.ok(DQ[k]);burstEl(b,20,k==="a"?["#2c84d8","#fff"]:["#f08a17","#fff"]);
       setTimeout(()=>{if($("#duel").hidden)return;if(DQ[k]>=WIN)duelWin(k==="a"?"蓝营":"橙营",q.v);else dqNext()},800)}
     else{DQ.lock[k]=true;sfx.bad();b.classList.add("wrong","shake");$("#h-"+k).classList.add("locked");$("#lk-"+k).textContent="答错了，这题不能再答";
       if(DQ.lock.a&&DQ.lock.b){DQ.done=true;setTimeout(()=>{if(!$("#duel").hidden)dqNext()},1300)}}}))}
-function duelWin(name,v){$("#resBox").innerHTML=`<h2>${name}得胜！</h2><p class="readit">${esc(v.zh)}（${esc(v.full)}）</p><p class="hint">两营一起，把这节经文大声念一遍。</p>
+function duelWin(name,v){BGM.stop();if(DQ&&DQ.iv){clearInterval(DQ.iv);DQ.iv=0}$("#resBox").innerHTML=`<h2>${name}得胜！</h2><p class="readit">${esc(v.zh)}（${esc(v.full)}）</p><p class="hint">两营一起，把这节经文大声念一遍。</p>
   <div class="row center"><button class="btn" id="rAgain">再战一局</button><button class="btn alt" id="rHome">回到首页</button></div>`;
   show("result");sfx.win();burst(innerWidth/2,innerHeight*.3,90);$("#rAgain").onclick=()=>show("duelPick");$("#rHome").onclick=()=>show("home")}
 let R=null;
-function startRace(){const v=raceVerse();R={v,ps:phrases(v.zh).map(p=>core(p.t)),s:{a:0,b:0},frozen:{},over:false};show("duel");
+function startRace(){const v=raceVerse();R={v,ps:phrases(v.zh).map(p=>core(p.t)),s:{a:0,b:0},frozen:{},over:false,end:v.isText?0:1};show("duel");BGM.start();
   $("#duelBox").innerHTML=`<div class="duelQ"><b style="font-family:var(--f-verse)">拼句赛跑</b><span class="hint">按顺序抢出下一句，最后选对出处</span></div>
     <div class="halves">${["a","b"].map(k=>`<div class="half race ${k}" id="h-${k}"><h4>${k==="a"?"蓝营":"橙营"}</h4><div class="bar"><i id="bar-${k}" style="width:0"></i></div><div class="done" id="dn-${k}"></div><div class="opts" id="op-${k}"></div><div class="lk" id="lk-${k}"></div></div>`).join("")}</div>`;
-  raceDraw("a");raceDraw("b")}
-function raceDraw(k){const ps=R.ps,pos=R.s[k];$("#bar-"+k).style.width=(pos/(ps.length+1)*100)+"%";
+  ["a","b"].forEach(k=>$("#op-"+k).innerHTML="");countdown($("#duelBox"),()=>{raceDraw("a");raceDraw("b")})}
+function raceDraw(k){const ps=R.ps,pos=R.s[k];$("#bar-"+k).style.width=(pos/(ps.length+R.end)*100)+"%";BGM.setHeat(Math.max(R.s.a,R.s.b)/(ps.length+R.end));
   $("#dn-"+k).textContent=ps.slice(0,Math.min(pos,ps.length)).join(EN()?" / ":"，")||"……";
   let right,opts;if(pos<ps.length){right=ps[pos];opts=shuffle([right,...shuffle(uniq(ps.filter(p=>p!==right))).slice(0,2)])}
   else{right=R.v.full;opts=refOpts(R.v).filter(x=>x!==right).slice(0,2).concat(right);opts=shuffle(opts)}
   const box=$("#op-"+k);box.innerHTML=opts.map((o,j)=>`<button class="opt" data-v="${esc(o)}"><kbd>${DKEY[k][j]}</kbd>${esc(o)}</button>`).join("");
   box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(R.over||R.frozen[k])return;
-    if(b.dataset.v===right){R.s[k]++;sfx.ok(R.s[k]);burstEl(b,10,k==="a"?["#2c84d8","#fff"]:["#f08a17","#fff"]);if(R.s[k]>ps.length){R.over=true;setTimeout(()=>duelWin(k==="a"?"蓝营":"橙营",R.v),400)}else raceDraw(k)}
+    if(b.dataset.v===right){R.s[k]++;sfx.ok(R.s[k]);heatPing(k,R.s[k],ps.length+R.end);burstEl(b,10,k==="a"?["#2c84d8","#fff"]:["#f08a17","#fff"]);if(R.s[k]>=ps.length+R.end){R.over=true;setTimeout(()=>duelWin(k==="a"?"蓝营":"橙营",R.v),400)}else raceDraw(k)}
     else{R.frozen[k]=true;sfx.bad();$("#h-"+k).classList.add("locked","shake");$("#lk-"+k).textContent="停两秒！";
       setTimeout(()=>{R.frozen[k]=false;$("#h-"+k).classList.remove("locked","shake");$("#lk-"+k).textContent="";if(!R.over&&!$("#duel").hidden)raceDraw(k)},2000)}})}
 
