@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>心版 · 老师后台</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/teacher-icon-192.png">
+<link rel="apple-touch-icon" href="icons/teacher-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="心版后台">
+<meta name="theme-color" content="#f6ecd9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
@@ -206,7 +212,7 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 /* 老师专属链接：teacher.html#k=钥匙，打开一次后这台设备会记住，不用登录 */
-const KEY=(()=>{const m=location.hash.match(/k=([\w-]{20,})/);try{if(m){localStorage.setItem("xb-teacher-key",m[1]);history.replaceState(null,"",location.pathname)}return m?m[1]:localStorage.getItem("xb-teacher-key")}catch(e){return m&&m[1]}})();
+const KEY=(()=>{const m=location.hash.match(/k=([\w-]{20,})/);try{if(m){localStorage.setItem("xb-teacher-key",m[1])}return m?m[1]:localStorage.getItem("xb-teacher-key")}catch(e){return m&&m[1]}})();
 const SB=supabase.createClient("https://ndaliuqndcongzdaekgu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWxpdXFuZGNvbmd6ZGFla2d1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTg5MDIsImV4cCI6MjEwOTM3NDkwMn0.W6gYi-pRe7bM5adLl0YpwtqJq9lSQ0OnextINsOGrr8",KEY?{global:{headers:{"x-teacher-key":KEY}},auth:{persistSession:false}}:undefined);
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -235,7 +241,7 @@ $("#authForm").onsubmit=async e=>{e.preventDefault();const email=$("#email").val
     else if(!data.session){m.className="msg ok";m.textContent="注册成功！请到邮箱点确认链接，然后回来登录。"}
   }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error){m.className="msg err";m.textContent=errText(error)}}
   $("#authGo").disabled=false};
-$("#logout").onclick=async()=>{if(KEY){try{localStorage.removeItem("xb-teacher-key")}catch(e){}location.reload();return}await SB.auth.signOut()};
+$("#logout").onclick=async()=>{if(KEY){try{localStorage.removeItem("xb-teacher-key")}catch(e){}location.replace(location.pathname);return}await SB.auth.signOut()};
 SB.auth.onAuthStateChange((ev,session)=>{if(KEY)return;const on=!!session;$("#loginBox").hidden=on;$("#app").hidden=!on;$("#logout").hidden=!on;$("#me").textContent=on?session.user.email:"";if(on)loadClasses();});
 
 /* ---------- 班级 ---------- */
