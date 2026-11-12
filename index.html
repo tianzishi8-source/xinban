@@ -930,22 +930,36 @@ const BGM={on:false,iv:0,next:0,step:0,heat:0,noise:null,master:null,
     this.next=AC.currentTime+.08;this.iv=setInterval(()=>this.tick(),25)},
   stop(){if(!this.on)return;this.on=false;clearInterval(this.iv);const g=this.master;try{g.gain.setTargetAtTime(0,AC.currentTime,.12);setTimeout(()=>{try{g.disconnect()}catch(e){}},700)}catch(e){}},
   setHeat(h){this.heat=Math.max(0,Math.min(1,h))},
-  tick(){if(!sound){this.stop();return}const sp=60/(124+this.heat*40)/4;
-    while(this.next<AC.currentTime+.12){this.play(this.step,this.next,sp);this.next+=sp;this.step=(this.step+1)%32}},
-  env(node,t,peak,dur){const g=AC.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+dur);node.connect(g).connect(this.master);return g},
-  play(s,t,sp){const h=this.heat;
-    if(s%4===0){const o=AC.createOscillator();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);this.env(o,t,.9,.16);o.start(t);o.stop(t+.2)}
-    if(h>.25&&s%8===4){const n=AC.createBufferSource();n.buffer=this.noise;const f=AC.createBiquadFilter();f.type="bandpass";f.frequency.value=1800;n.connect(f);this.env(f,t,.35,.12);n.start(t);n.stop(t+.15)}
-    {const n=AC.createBufferSource();n.buffer=this.noise;const f=AC.createBiquadFilter();f.type="highpass";f.frequency.value=7000;n.connect(f);this.env(f,t,s%2?.05:.1,.04);n.start(t);n.stop(t+.06)}
-    if(s%2===0){const B=[45,45,57,45,43,45,52,43,45,45,57,48,50,48,47,44],o=AC.createOscillator(),f=AC.createBiquadFilter();o.type="sawtooth";o.frequency.value=midi(B[Math.floor(s/2)%16]);f.type="lowpass";f.frequency.value=380+h*900;o.connect(f);this.env(f,t,.16,sp*1.7);o.start(t);o.stop(t+sp*2)}
-    if(h>.55&&s%4===2){const A=[69,72,76,79,76,72,69,64],o=AC.createOscillator();o.type="square";o.frequency.value=midi(A[Math.floor(s/4)%8]+(h>.85?12:0));this.env(o,t,.045,.09);o.start(t);o.stop(t+.12)}}};
+  /* 竞赛配乐：时钟滴答 + 定音鼓 + 低音弦乐和弦（D 小调），比分越接近越快，并加入大提琴持续音和高音弦乐 */
+  tick(){if(!sound){this.stop();return}const sp=60/(88+this.heat*30)/2;
+    while(this.next<AC.currentTime+.15){this.play(this.step,this.next,sp);this.next+=sp;this.step=(this.step+1)%32}},
+  env(node,t,peak,dur,att){const g=AC.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+(att||.005));g.gain.exponentialRampToValueAtTime(.0001,t+dur);node.connect(g).connect(this.master);return g},
+  str(n,t,dur,peak,cut){const f=AC.createBiquadFilter();f.type="lowpass";f.frequency.value=cut;f.Q.value=.7;
+    [-6,6].forEach(c=>{const o=AC.createOscillator();o.type="sawtooth";o.frequency.value=midi(n);o.detune.value=c;o.connect(f);o.start(t);o.stop(t+dur+.1)});
+    this.env(f,t,peak,dur,Math.min(.45,dur/3))},
+  play(s,t,sp){const h=this.heat,bar=Math.floor(s/8),beat=s%8;
+    const CH=[[38,45,50],[34,41,46],[31,38,43],[33,40,49]],root=[38,34,31,33][bar%4];
+    /* 时钟：每拍一下，嘀、嗒交替 */
+    if(beat%2===0){const n=AC.createBufferSource();n.buffer=this.noise;const f=AC.createBiquadFilter();f.type="bandpass";f.frequency.value=beat%4===0?3200:2500;f.Q.value=8;n.connect(f);this.env(f,t,.22,.035);n.start(t);n.stop(t+.05)}
+    /* 定音鼓：每小节第一拍；紧张时第三拍也敲，最后阶段像心跳 */
+    const timp=(fr,pk)=>{const o=AC.createOscillator();o.type="sine";o.frequency.setValueAtTime(fr*1.5,t);o.frequency.exponentialRampToValueAtTime(fr,t+.08);this.env(o,t,pk,.7);o.start(t);o.stop(t+.75)};
+    if(beat===0)timp(midi(root),.75);
+    if(h>.45&&beat===4)timp(midi(root+7),.45);
+    if(h>.8&&beat===1)timp(midi(root),.5);
+    /* 低音弦乐：每小节换一个和弦 */
+    if(beat===0)CH[bar%4].forEach(n=>this.str(n,t,sp*8,.05,420+h*700));
+    /* 大提琴：持续的八分音符，紧张感 */
+    if(h>.3)this.str(root+12,t,sp*.9,.06+h*.04,900);
+    /* 高音弦乐：最后阶段渐强的长音 */
+    if(h>.7&&beat===0){const f=AC.createBiquadFilter();f.type="lowpass";f.frequency.value=2400;const o=AC.createOscillator();o.type="sawtooth";o.frequency.value=midi(root+36);o.connect(f);
+      const g=AC.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.022,t+sp*7);g.gain.exponentialRampToValueAtTime(.0001,t+sp*8.2);f.connect(g).connect(this.master);o.start(t);o.stop(t+sp*8.3)}}};
 function countdown(box,cb){let n=3;const ov=document.createElement("div");ov.className="cdown";box.appendChild(ov);
   const go=()=>{if($("#duel").hidden){ov.remove();return}
-    if(n>0){ov.innerHTML=`<b>${n}</b>`;tone([660],.12,"square");n--;setTimeout(go,650)}
-    else{ov.innerHTML=`<b class="go">开始！</b>`;tone([880,1320],.2,"square",.06);setTimeout(()=>{ov.remove();cb()},450)}};go()}
+    if(n>0){ov.innerHTML=`<b>${n}</b>`;tone([220],.35,"sine");n--;setTimeout(go,650)}
+    else{ov.innerHTML=`<b class="go">开始！</b>`;tone([196,294,392],.6,"triangle",.0);setTimeout(()=>{ov.remove();cb()},450)}};go()}
 function heatPing(k,score,goal){const dt=$(".duelTop");if(dt){dt.classList.remove("hit");void dt.offsetWidth;dt.classList.add("hit")}
   document.body.classList.remove("dshake");void document.body.offsetWidth;document.body.classList.add("dshake");
-  if(score===goal-1){const m=document.createElement("div");m.className="mpoint "+k;m.textContent=(k==="a"?"蓝营":"橙营")+" 赛点！";$("#duelBox").appendChild(m);setTimeout(()=>m.remove(),1400);tone([784,988,1175],.18,"square",.07)}}
+  if(score===goal-1){const m=document.createElement("div");m.className="mpoint "+k;m.textContent=(k==="a"?"蓝营":"橙营")+" 赛点！";$("#duelBox").appendChild(m);setTimeout(()=>m.remove(),1400);tone([147,220,294],.8,"triangle",0)}}
 function show(id){if(id!=="duel"){BGM.stop();if(DQ&&DQ.iv){clearInterval(DQ.iv);DQ.iv=0}document.body.classList.remove("dshake")}stopNow();stopNow=()=>{};document.body.dataset.screen=id;["home","map","teacher","mem","test","duelPick","duel","result","board","import"].forEach(s=>$("#"+s).hidden=s!==id);
   $("#homeBtn").hidden=id==="home";scrollTo({top:0});if(id==="home")renderHome()}
 $("#homeBtn").onclick=()=>show("home");
@@ -1429,7 +1443,7 @@ function dqNext(){if(DQ.iv){clearInterval(DQ.iv);DQ.iv=0}
   const t0=Date.now();let lastBeep=99;
   DQ.iv=setInterval(()=>{if($("#duel").hidden||DQ.done){clearInterval(DQ.iv);DQ.iv=0;return}const left=DQT-(Date.now()-t0)/1000,bar=$("#dqBar");
     if(bar){bar.style.width=Math.max(0,left/DQT*100)+"%";bar.classList.toggle("hot",left<=4)}
-    const sec=Math.ceil(left);if(sec<=3&&sec>0&&sec<lastBeep){lastBeep=sec;tone([sec===1?1200:900],.07,"square")}
+    const sec=Math.ceil(left);if(sec<=3&&sec>0&&sec<lastBeep){lastBeep=sec;tone([sec===1?660:520],.12,"sine")}
     if(left<=0){clearInterval(DQ.iv);DQ.iv=0;DQ.done=true;sfx.bad();["a","b"].forEach(k=>{$("#lk-"+k).textContent="时间到！";$("#h-"+k).querySelectorAll(".opt").forEach(x=>{if(x.dataset.v===q.ans)x.classList.add("right")})});
       setTimeout(()=>{if(!$("#duel").hidden)dqNext()},1500)}},100);
   ["a","b"].forEach(k=>$("#h-"+k).querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(DQ.done||DQ.lock[k])return;
