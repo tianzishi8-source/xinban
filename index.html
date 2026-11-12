@@ -715,6 +715,14 @@ body.dshake main{animation:dshake .28s}
 @media (prefers-reduced-motion:reduce){body.dshake main,.cdown b,.mpoint,.duelTop.hit{animation:none}}
 
 #packTabs button{white-space:nowrap}
+
+.chip.inst{background:linear-gradient(180deg,#fff3dc,#ffe2b0);border-color:rgba(196,130,58,.4);color:#7a4416;font-weight:700}
+.instbox{position:fixed;inset:0;z-index:90;background:rgba(40,28,16,.45);display:grid;place-items:center;padding:16px}
+.instbox[hidden]{display:none}
+.instbox .card{background:#fffaf0;border-radius:18px;padding:20px 22px;max-width:360px;width:100%;box-shadow:0 20px 50px -20px rgba(0,0,0,.5);color:#3b2a1a}
+.instbox h3{margin:0 0 10px;font-family:var(--f-head);font-size:20px;color:#7a4416}
+.instbox ol{margin:0 0 10px;padding-left:22px;line-height:1.9;font-size:16px}
+.instbox .btn{width:100%;margin-top:6px}
 </style>
 <div id="skyfx" aria-hidden="true"><div class="sun"></div><div class="cl c1"></div><div class="cl c2"></div><div class="cl c3"></div><div class="hill"></div></div>
 <div id="warmfx" aria-hidden="true"></div>
@@ -741,7 +749,7 @@ body.dshake main{animation:dshake .28s}
     </div>
     <div class="row">
       <label class="nameBox" for="nick">玩家<input id="nick" maxlength="12" placeholder="写下你的名字"></label>
-      <button class="chip acc" id="accBtn" type="button">登录</button><button class="chip" id="soundBtn">声音：开</button>
+      <button class="chip acc" id="accBtn" type="button">登录</button><button class="chip" id="soundBtn">声音：开</button><button class="chip inst" id="instBtn" type="button" hidden>📲 添加到桌面</button>
       <button class="chip" id="homeBtn" hidden>回到首页</button>
     </div>
   </div>
@@ -1581,6 +1589,23 @@ renderHome();initClass();if(EN())needEn(LIB).then(()=>renderHome());
 document.querySelectorAll("#langSw button").forEach(b=>b.onclick=()=>{setLang(b.dataset.l);drawLang()});
 function drawLang(){document.querySelectorAll("#langSw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===LANG));$("#esvNote").hidden=!EN()}drawLang();
 drawAcc();if(ACC.tok)accSync();else if(!ACC.guest)showLogin();
+
+/* ===== 添加到手机桌面 ===== */
+(()=>{const btn=$("#instBtn");let evt=null;
+  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+  const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),wx=/MicroMessenger/i.test(ua),mobile=/Android|iPhone|iPad|iPod/i.test(ua)||ios;
+  if(standalone||!mobile)return;
+  btn.hidden=false;
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();evt=e});
+  addEventListener("appinstalled",()=>{btn.hidden=true;toast("已添加到桌面")});
+  const guide=html=>{let m=$("#instBox");if(!m){m=document.createElement("div");m.id="instBox";m.className="instbox";document.body.appendChild(m)}
+    m.innerHTML=`<div class="card"><h3>添加到手机桌面</h3>${html}<button class="btn" id="instOk">知道了</button></div>`;m.hidden=false;
+    $("#instOk").onclick=()=>m.hidden=true;m.onclick=e=>{if(e.target===m)m.hidden=true}};
+  btn.onclick=async()=>{
+    if(evt){evt.prompt();const r=await evt.userChoice.catch(()=>null);evt=null;if(r&&r.outcome==="accepted")btn.hidden=true;return}
+    if(wx)return guide(`<p>微信里不能直接添加。</p><ol><li>点右上角 <b>“…”</b></li><li>选 <b>“在浏览器中打开”</b></li><li>在浏览器里再点一次这个按钮</li></ol>`);
+    if(ios)return guide(`<ol><li>用 <b>Safari</b> 打开这个网页</li><li>点屏幕底部的 <b>分享</b> 按钮（方框加向上的箭头）</li><li>往下找 <b>“添加到主屏幕”</b>，点“添加”</li></ol><p class="hint">第一次从桌面打开时，要重新登录一次账号。</p>`);
+    guide(`<ol><li>点浏览器右上角的 <b>⋮</b>（竖着的三个点）</li><li>选 <b>“添加到主屏幕”</b> 或 <b>“安装应用”</b></li><li>点“添加”</li></ol><p class="hint">如果菜单在屏幕下方，就点下方的 ≡ 或 ⋮。</p>`)}})();
 </script>
 
 </body>
