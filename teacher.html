@@ -287,12 +287,12 @@ let WR=[];
 $("#wAll").onchange=()=>drawWritings();$("#wDays").onchange=()=>loadWritings();
 async function loadWritings(){const cid=CID;const {data,error}=await SB.rpc("teacher_writings",{p_class:CID,p_days:+$("#wDays").value});if(cid!==CID)return;
   if(error){$("#wList").innerHTML=`<p class="msg err">${esc(errText(error))}</p>`;return}WR=data||[];drawWritings()}
-function drawWritings(){const all=$("#wAll").checked,L=WR.filter(w=>all||w.kind==="write");
+function drawWritings(){const all=$("#wAll").checked,L=WR.filter(w=>all||w.kind!=="translate");
   if(!L.length){$("#wList").innerHTML=`<p class="empty">这段时间还没有学生写句子。</p>`;return}
   const day=t=>new Date(t).toLocaleDateString("zh-CN",{timeZone:TZ,month:"numeric",day:"numeric",weekday:"short"});
   let last="";$("#wList").innerHTML=L.map(w=>{const d=day(w.at),h=d!==last?`<h4 class="wday">${d}</h4>`:"";last=d;
-    return h+`<div class="wrow" data-id="${w.id}"><div class="wmeta"><b>${esc(w.name)}</b><span class="pill ${w.kind==="write"?"on":"none"}">${w.kind==="write"?"自己造句":"译句"}</span><span class="wword">${esc(w.word)}</span><small>${hm(w.at)}</small></div>
-      <div class="wbody">${esc(w.body)}</div>${w.kind==="translate"&&w.ref?`<div class="wref">参考：${esc(w.ref)}</div>`:""}
+    return h+`<div class="wrow" data-id="${w.id}"><div class="wmeta"><b>${esc(w.name)}</b><span class="pill ${w.kind==="write"?"on":w.kind==="assess"?"mid":"none"}">${w.kind==="write"?"自己造句":w.kind==="assess"?"词汇测评":"译句"}</span><span class="wword">${esc(w.word)}</span><small>${hm(w.at)}</small></div>
+      <div class="wbody">${esc(w.body)}</div>${w.kind==="translate"&&w.ref?`<div class="wref">参考：${esc(w.ref)}</div>`:w.kind==="assess"&&w.ref?`<div class="wref">${esc(w.ref)}</div>`:""}
       <div class="wnote"><input placeholder="写一句评语（可不写）" value="${esc(w.note||"")}"><button class="btn small" data-a="save">保存</button><button class="btn ghost small" data-a="good">👍 好</button></div></div>`}).join("");
   $("#wList").querySelectorAll(".wrow").forEach(r=>r.querySelectorAll("button").forEach(b=>b.onclick=async()=>{const inp=r.querySelector("input");if(b.dataset.a==="good")inp.value="好！";
     b.disabled=true;const {error}=await SB.rpc("teacher_note_writing",{p_id:+r.dataset.id,p_note:inp.value});b.disabled=false;
