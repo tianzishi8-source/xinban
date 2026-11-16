@@ -123,6 +123,15 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
 .pw{font-family:ui-monospace,Menlo,monospace;font-size:16px;letter-spacing:.1em;font-weight:700}
 .danger-q{color:var(--red);font-size:13px}
 @media print{body.printing .card:not(#acctCard),body.printing #tiles,body.printing .msg,body.printing .ops{display:none!important}body.printing .tablewrap{overflow:visible}body.printing table{min-width:0}.printonly{display:block!important}body{background:#fff;padding:0}body::before,.noprint{display:none!important}.card{box-shadow:none;border:0}.newlist td,.newlist th{font-size:16px;padding:10px}}
+
+/* 造句 */
+.wday{margin:14px 0 6px;font-size:14px;color:#6b4a1f}
+.wrow{border:1px solid rgba(150,105,45,.18);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fffdf8}
+.wmeta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.wmeta small{color:var(--muted);margin-left:auto}
+.wword{font:700 14px Georgia,"Times New Roman",serif;color:#c2410c}
+.wbody{font:17px/1.6 Georgia,"Times New Roman",serif;margin:6px 0}
+.wref{font-size:13px;color:var(--muted);font-family:Georgia,"Times New Roman",serif}
+.wnote{display:flex;gap:6px;margin-top:6px}.wnote input{flex:1;min-width:0;padding:7px 10px}
 </style>
 </head>
 <body>
@@ -150,7 +159,7 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
     <div class="wrap">
       <div class="card classbar noprint">
         <label for="classSel" style="flex-direction:row;align-items:center;gap:8px">班级<select id="classSel"></select></label>
-        <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vHw" aria-pressed="true">作业检查</button><button id="vStats" aria-pressed="false">学习情况</button><button id="vAcct" aria-pressed="false">学生账号与密码</button></div>
+        <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vHw" aria-pressed="true">作业检查</button><button id="vStats" aria-pressed="false">学习情况</button><button id="vWrite" aria-pressed="false">造句</button><button id="vAcct" aria-pressed="false">学生账号与密码</button></div>
         <span style="flex:1"></span>
         <form id="newClass" class="row" style="flex-wrap:nowrap"><input id="newClassName" placeholder="新班级名称，例如 初二一班" maxlength="40" style="width:200px"><button class="btn small" type="submit">新建班级</button></form>
       </div>
@@ -186,6 +195,15 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
       <div class="card detail" id="detail" hidden></div>
 
       <!-- 学生账号 -->
+      <!-- 造句 -->
+      <div id="writeView" hidden>
+        <div class="card">
+          <div class="hwbar"><b style="font-family:var(--f-head);font-size:18px">学生写的英文句子</b>
+            <div class="daynav"><label class="goal"><input type="checkbox" id="wAll" style="width:auto"> 也显示“看中文写英文”的译句</label><select id="wDays" style="width:auto;padding:6px 8px"><option value="7">近 7 天</option><option value="14" selected>近 14 天</option><option value="30">近 30 天</option></select></div></div>
+          <p class="hint" style="margin:0 0 10px">“自己造句”是学生用这个词写的句子，游戏只检查了有没有用到这个词，意思对不对需要您看。写了评语，学生在“神学词汇”页能看到。</p>
+          <div id="wList"></div>
+        </div>
+      </div>
       <div id="acctView" hidden>
         <div>
           <div class="card" style="display:flex;flex-direction:column;gap:12px">
@@ -257,12 +275,28 @@ $("#newClass").onsubmit=async e=>{e.preventDefault();const n=$("#newClassName").
   const {data,error}=await SB.rpc("teacher_create_class",{p_name:n});if(error){$("#appMsg").textContent=errText(error);return}
   $("#newClassName").value="";localStorage.setItem("xb-teacher-class",data.id);await loadClasses(data.id);setView("acct")};
 
-let VIEW=(()=>{try{return localStorage.getItem("xb-teacher-view")||"hw"}catch(e){return "hw"}})();if(!["hw","stats","acct"].includes(VIEW))VIEW="hw";
+let VIEW=(()=>{try{return localStorage.getItem("xb-teacher-view")||"hw"}catch(e){return "hw"}})();if(!["hw","stats","acct","write"].includes(VIEW))VIEW="hw";
 function setView(v){if(v!==VIEW)$("#detail").hidden=true;VIEW=v;try{localStorage.setItem("xb-teacher-view",v)}catch(e){}showView()}
-$("#vHw").onclick=()=>setView("hw");$("#vStats").onclick=()=>setView("stats");$("#vAcct").onclick=()=>setView("acct");
-function showView(){if(!CID)return;[["hw","#vHw"],["stats","#vStats"],["acct","#vAcct"]].forEach(([k,b])=>$(b).setAttribute("aria-pressed",VIEW===k));
-  $("#hwView").hidden=VIEW!=="hw";$("#statsView").hidden=VIEW!=="stats";$("#acctView").hidden=VIEW!=="acct";if(VIEW==="acct")$("#detail").hidden=true;
-  loadOverview();loadAccounts();if(VIEW==="hw")loadDay()}
+$("#vHw").onclick=()=>setView("hw");$("#vStats").onclick=()=>setView("stats");$("#vAcct").onclick=()=>setView("acct");$("#vWrite").onclick=()=>setView("write");
+function showView(){if(!CID)return;[["hw","#vHw"],["stats","#vStats"],["write","#vWrite"],["acct","#vAcct"]].forEach(([k,b])=>$(b).setAttribute("aria-pressed",VIEW===k));
+  $("#hwView").hidden=VIEW!=="hw";$("#statsView").hidden=VIEW!=="stats";$("#acctView").hidden=VIEW!=="acct";$("#writeView").hidden=VIEW!=="write";if(VIEW==="acct"||VIEW==="write")$("#detail").hidden=true;
+  loadOverview();loadAccounts();if(VIEW==="hw")loadDay();if(VIEW==="write")loadWritings()}
+
+/* ---------- 造句 ---------- */
+let WR=[];
+$("#wAll").onchange=()=>drawWritings();$("#wDays").onchange=()=>loadWritings();
+async function loadWritings(){const cid=CID;const {data,error}=await SB.rpc("teacher_writings",{p_class:CID,p_days:+$("#wDays").value});if(cid!==CID)return;
+  if(error){$("#wList").innerHTML=`<p class="msg err">${esc(errText(error))}</p>`;return}WR=data||[];drawWritings()}
+function drawWritings(){const all=$("#wAll").checked,L=WR.filter(w=>all||w.kind==="write");
+  if(!L.length){$("#wList").innerHTML=`<p class="empty">这段时间还没有学生写句子。</p>`;return}
+  const day=t=>new Date(t).toLocaleDateString("zh-CN",{timeZone:TZ,month:"numeric",day:"numeric",weekday:"short"});
+  let last="";$("#wList").innerHTML=L.map(w=>{const d=day(w.at),h=d!==last?`<h4 class="wday">${d}</h4>`:"";last=d;
+    return h+`<div class="wrow" data-id="${w.id}"><div class="wmeta"><b>${esc(w.name)}</b><span class="pill ${w.kind==="write"?"on":"none"}">${w.kind==="write"?"自己造句":"译句"}</span><span class="wword">${esc(w.word)}</span><small>${hm(w.at)}</small></div>
+      <div class="wbody">${esc(w.body)}</div>${w.kind==="translate"&&w.ref?`<div class="wref">参考：${esc(w.ref)}</div>`:""}
+      <div class="wnote"><input placeholder="写一句评语（可不写）" value="${esc(w.note||"")}"><button class="btn small" data-a="save">保存</button><button class="btn ghost small" data-a="good">👍 好</button></div></div>`}).join("");
+  $("#wList").querySelectorAll(".wrow").forEach(r=>r.querySelectorAll("button").forEach(b=>b.onclick=async()=>{const inp=r.querySelector("input");if(b.dataset.a==="good")inp.value="好！";
+    b.disabled=true;const {error}=await SB.rpc("teacher_note_writing",{p_id:+r.dataset.id,p_note:inp.value});b.disabled=false;
+    if(error){alert(errText(error));return}const w=WR.find(x=>x.id===+r.dataset.id);if(w)w.note=inp.value;b.textContent="已保存";setTimeout(()=>b.textContent=b.dataset.a==="good"?"👍 好":"保存",1200)}))}
 
 /* ---------- 作业检查 ---------- */
 const TZ="Asia/Jakarta";

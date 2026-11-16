@@ -527,3 +527,8 @@ end $$;
 revoke all on function public.student_save_plays(text, jsonb), public.teacher_day(bigint, date), public.teacher_student_days(bigint, int) from public;
 grant execute on function public.student_save_plays(text, jsonb), public.teacher_day(bigint, date), public.teacher_student_days(bigint, int) to anon, authenticated;
 revoke all on all functions in schema private from public, anon, authenticated;
+
+-- ========== 2026-11-16：神学词汇（学生的译句、造句，老师评语） ==========
+-- 表 public.writings(id, student_id, word, kind 'translate'|'write', body, ref, at, note, noted_at)，RLS 开启、无策略
+-- RPC：student_save_writing(token, word, kind, body, ref)、student_writings(token)、teacher_writings(class, days)、teacher_note_writing(id, note)
+-- 完整 SQL 见迁移 vocab_writings
