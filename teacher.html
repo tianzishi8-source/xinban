@@ -430,8 +430,8 @@ $("#printAll").onclick=()=>{$("#printTitle").textContent=`心版 · ${clsName()}
 function drawAcct(){const t=$("#acctTbl");$("#siteLine").innerHTML=`学生在游戏网址 <b>${esc(SITE())}</b> 用下面的账号和密码登录。`;
   if(!ACCTS.length){t.innerHTML=`<tbody><tr><td class="empty">还没有学生。在上面写名字，点“生成账号”。</td></tr></tbody>`;return}
   t.innerHTML=`<thead><tr><th>姓名</th><th>账号</th><th>密码</th><th>最近上线</th><th class="ops"></th></tr></thead><tbody>`+ACCTS.map(r=>`<tr data-id="${r.id}" style="cursor:default">
-    <td><span class="nm">${esc(r.name)}</span></td><td class="pw">${esc(r.username)}</td><td class="pw">${r.password?esc(r.password):'<span class="hint">请点重置密码</span>'}</td><td>${ago(r.last_seen)}</td>
-    <td class="ops"><div class="row" style="justify-content:flex-end"><button class="btn ghost small" data-op="pw">重置密码</button><button class="btn ghost small" data-op="rn">改名</button><button class="btn ghost small" data-op="del">删除</button></div></td></tr>`).join("")+`</tbody>`;
+    <td><span class="nm">${esc(r.name)}</span></td><td class="pw">${esc(r.username)}</td><td class="pw">${r.password?esc(r.password):'<span class="hint">学生自设（忘了可点重置）</span>'}</td><td>${ago(r.last_seen)}</td>
+    <td class="ops"><div class="row" style="justify-content:flex-end"><button class="btn ghost small" data-op="pw">重置密码</button><button class="btn ghost small" data-op="rn">改名</button>${CLASSES.length>1?'<button class="btn ghost small" data-op="mv">移到班级</button>':""}<button class="btn ghost small" data-op="del">删除</button></div></td></tr>`).join("")+`</tbody>`;
   t.querySelectorAll("button[data-op]").forEach(b=>b.onclick=()=>acctOp(+b.closest("tr").dataset.id,b.dataset.op,b))}
 async function acctOp(id,op,btn){const r=ACCTS.find(x=>x.id===id),cell=btn.closest("td");
   if(op==="pw"){const {data,error}=await SB.rpc("teacher_reset_password",{p_student:id});if(error){$("#appMsg").textContent=errText(error);return}
@@ -439,6 +439,12 @@ async function acctOp(id,op,btn){const r=ACCTS.find(x=>x.id===id),cell=btn.close
   if(op==="rn"){cell.innerHTML=`<form class="row" style="justify-content:flex-end;flex-wrap:nowrap"><input value="${esc(r.name)}" maxlength="20" style="width:140px"><button class="btn small">保存</button></form>`;
     const f=cell.querySelector("form");f.querySelector("input").focus();f.onsubmit=async e=>{e.preventDefault();const n=f.querySelector("input").value.trim();if(!n)return;
       const {error}=await SB.rpc("teacher_rename_student",{p_student:id,p_name:n});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}
+  if(op==="mv"){const others=CLASSES.filter(c=>c.id!==CID);
+    cell.innerHTML=`<form class="row" style="justify-content:flex-end;flex-wrap:nowrap"><select style="width:auto">${others.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select><button class="btn small">移过去</button><button class="btn ghost small" type="button" data-n>取消</button></form>`;
+    const f=cell.querySelector("form");f.querySelector("[data-n]").onclick=()=>drawAcct();
+    f.onsubmit=async e=>{e.preventDefault();const to=+f.querySelector("select").value;
+      const {error}=await SB.rpc("teacher_move_student",{p_student:id,p_class:to});if(error){$("#appMsg").textContent=errText(error);return}
+      $("#addMsg").className="msg ok";$("#addMsg").textContent=`已把 ${r.name} 移到“${(CLASSES.find(c=>c.id===to)||{}).name||""}”，学习记录一起带过去。`;reloadAll()}}
   if(op==="del"){cell.innerHTML=`<div class="row" style="justify-content:flex-end"><span class="danger-q">删除 ${esc(r.name)} 和全部学习记录？</span><button class="btn danger small" data-y>确定删除</button><button class="btn ghost small" data-n>取消</button></div>`;
     cell.querySelector("[data-n]").onclick=()=>drawAcct();
     cell.querySelector("[data-y]").onclick=async()=>{const {error}=await SB.rpc("teacher_delete_student",{p_student:id});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}}

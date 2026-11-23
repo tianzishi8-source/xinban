@@ -565,6 +565,10 @@ kbd{display:inline-flex;align-items:center;justify-content:center;min-width:22px
 .fld input{width:100%;box-sizing:border-box;font:600 20px/1.4 var(--f-body);letter-spacing:.08em;color:var(--ink);background:#fff;border:1px solid var(--hair);border-radius:14px;padding:12px 14px;box-shadow:inset 0 2px 4px rgba(120,80,30,.08)}
 .fld input:focus{outline:none;border-color:#e0a54e;box-shadow:0 0 0 3px rgba(224,165,78,.25)}
 .acccard .msg{min-height:1.2em;margin:0}
+.accsw{display:flex;width:100%;gap:0;background:#f4ead8;border-radius:999px;padding:3px}
+.accsw button{flex:1;padding:8px 0;border-radius:999px;font-weight:700;font-size:14px;color:#8a6a3a}
+.accsw button[aria-pressed="true"]{background:#fff;color:#d0602a;box-shadow:0 2px 6px -2px rgba(120,80,30,.35)}
+.fld small{font-weight:500;color:var(--muted)}
 .chip.acc.on{background:linear-gradient(180deg,#fff5e0,#ffe7bd);color:#7a4a1c}
 /* 训练模式切换 */
 .modesw{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -779,10 +783,13 @@ body.dshake main{animation:dshake .28s}
 <div id="skyfx" aria-hidden="true"><div class="sun"></div><div class="cl c1"></div><div class="cl c2"></div><div class="cl c3"></div><div class="hill"></div></div>
 <div id="warmfx" aria-hidden="true"></div>
 <div class="lvstart" id="accBox" hidden><form class="lvcard acccard" id="accForm" autocomplete="on" novalidate>
-  <div class="lvrib">登　录</div>
-  <p class="acctip">用老师发给你的账号和密码登录，<br>进度、练习时长和测验成绩会保存下来。</p>
+  <div class="lvrib" id="accRib">登　录</div>
+  <div class="accsw" role="tablist"><button type="button" id="accTabIn" aria-pressed="true">登录</button><button type="button" id="accTabUp" aria-pressed="false">注册新账号</button></div>
+  <p class="acctip" id="accTip">用你的账号和密码登录，<br>进度、练习时长和测验成绩会保存下来。</p>
+  <label class="fld" for="accName" id="accNameFld" hidden>你的名字<input id="accName" name="name" autocomplete="name" placeholder="例如 王小明" maxlength="20"></label>
   <label class="fld" for="accUser">账号<input id="accUser" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="例如 g8grace" maxlength="24"></label>
-  <label class="fld" for="accPw">密码<input id="accPw" name="password" type="password" inputmode="numeric" autocomplete="current-password" placeholder="6 位数字" maxlength="12"></label>
+  <label class="fld" for="accPw">密码<input id="accPw" name="password" type="password" autocomplete="current-password" placeholder="输入密码" maxlength="20"></label>
+  <label class="fld" for="accPw2" id="accPw2Fld" hidden>再输一次密码<input id="accPw2" name="password2" type="password" autocomplete="new-password" placeholder="和上面一样" maxlength="20"></label>
   <p class="msg err" id="accMsg" role="alert"></p>
   <button class="btn big" id="accGo" type="submit">登录</button>
   <button class="chip" id="accGuest" type="button">先当游客玩（进度只存在这台设备）</button>
@@ -1601,7 +1608,7 @@ async function rpc(fn,args,keep){const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn
 function accSave(){store.set("xb-tok",ACC.tok);store.set("xb-name",ACC.name);store.set("xb-user",ACC.user);store.set("xb-cls",ACC.cls);store.set("xb-guest",ACC.guest)}
 function drawAcc(){const b=$("#accBtn");b.textContent=ACC.tok?`${ACC.name} · 退出`:"登录";b.classList.toggle("on",!!ACC.tok);
   const nb=document.querySelector(".nameBox");if(nb)nb.hidden=!!ACC.tok;if(typeof vGate==="function")vGate()}
-function showLogin(msg){$("#accBox").hidden=false;$("#accMsg").textContent=msg||"";setTimeout(()=>{try{$("#accUser").focus({preventScroll:true})}catch(e){}},60)}
+function showLogin(msg){$("#accBox").hidden=false;if(typeof setAccMode==="function")setAccMode("in");$("#accMsg").textContent=msg||"";setTimeout(()=>{try{$("#accUser").focus({preventScroll:true})}catch(e){}},60)}
 function resetLocal(){MEM={};ADV={};TBEST=0;LOCALB=[];Q={p:{},t:[],l:[],sec:0};store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",0);store.set("xb4-local",[]);saveQ()}
 function sessionGone(){ACC.tok=null;accSave();drawAcc();showLogin("登录已过期，请重新登录。")}
 async function flushQ(){if(!ACC.tok||flushQ.busy)return;flushQ.busy=true;
@@ -1622,13 +1629,36 @@ async function accSync(){if(!ACC.tok)return;
     TBEST=Math.max(TBEST,d.best||0);store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",TBEST);saveQ();
     drawAcc();if(!$("#home").hidden)renderHome();flushQ()}
   catch(e){if(e.code==="SESSION_EXPIRED")sessionGone()}}
+let accMode="in";
+function setAccMode(m){accMode=m;const up=m==="up";
+  $("#accTabIn").setAttribute("aria-pressed",!up);$("#accTabUp").setAttribute("aria-pressed",up);
+  $("#accRib").textContent=up?"注　册":"登　录";$("#accGo").textContent=up?"注册并开始":"登录";
+  $("#accNameFld").hidden=$("#accPw2Fld").hidden=!up;
+  $("#accTip").innerHTML=up?"自己起一个账号和密码。<br>账号用小写字母开头，可以加数字，4–20 位。":"用你的账号和密码登录，<br>进度、练习时长和测验成绩会保存下来。";
+  $("#accUser").placeholder=up?"例如 grace2013":"例如 g8grace";$("#accUser").autocomplete="username";
+  $("#accPw").placeholder=up?"至少 4 位":"输入密码";$("#accPw").autocomplete=up?"new-password":"current-password";
+  $("#accMsg").textContent="";setTimeout(()=>{try{(up?$("#accName"):$("#accUser")).focus({preventScroll:true})}catch(e){}},30)}
+$("#accTabIn").onclick=()=>setAccMode("in");$("#accTabUp").onclick=()=>setAccMode("up");
+const REG_ERR={BAD_NAME:"请写上你的名字（20 个字以内）。",BAD_USERNAME:"账号要用小写字母开头，只能有字母和数字，4–20 位。",
+  RESERVED_USERNAME:"“两个字母＋数字”这种格式留给老师发的账号，请换一个，比如在后面加几个字母。",BAD_PASSWORD:"密码要 4–20 位。",
+  USERNAME_TAKEN:"这个账号已经有人用了，换一个吧。",TOO_MANY:"注册太频繁了，请过一会儿再试。",REG_CLOSED:"现在暂停注册，请找老师要账号。"};
+async function accDone(d){if(ACC.user&&ACC.user!==d.username)resetLocal();
+  Object.assign(ACC,{tok:d.token,name:d.name,user:d.username,cls:d.class||"",guest:false});accSave();
+  $("#accBox").hidden=true;$("#accPw").value="";$("#accPw2").value="";drawAcc();toast(`欢迎，${d.name}`);await accSync()}
 $("#accForm").onsubmit=async e=>{e.preventDefault();const u=$("#accUser").value.replace(/\s+/g,"").toLowerCase(),p=$("#accPw").value.trim(),m=$("#accMsg");
+  if(accMode==="up"){const n=$("#accName").value.trim(),p2=$("#accPw2").value.trim();
+    if(!n){m.textContent=REG_ERR.BAD_NAME;return}
+    if(!/^[a-z][a-z0-9]{3,19}$/.test(u)){m.textContent=REG_ERR.BAD_USERNAME;return}
+    if(/^[a-z]{2}[0-9]{2,3}$/.test(u)){m.textContent=REG_ERR.RESERVED_USERNAME;return}
+    if(p.length<4){m.textContent=REG_ERR.BAD_PASSWORD;return}
+    if(p!==p2){m.textContent="两次输入的密码不一样。";return}
+    $("#accGo").disabled=true;m.textContent="";
+    try{await accDone(await rpc("student_register",{p_name:n,p_username:u,p_password:p}))}
+    catch(err){m.textContent=REG_ERR[err.code]||"连不上网络，请稍后再试。"}
+    $("#accGo").disabled=false;return}
   if(!u||!p){m.textContent="请输入账号和密码。";return}
   $("#accGo").disabled=true;m.textContent="";
-  try{const d=await rpc("student_login",{p_username:u,p_password:p});
-    if(ACC.user&&ACC.user!==d.username)resetLocal();
-    Object.assign(ACC,{tok:d.token,name:d.name,user:d.username,cls:d.class||"",guest:false});accSave();
-    $("#accBox").hidden=true;$("#accPw").value="";drawAcc();toast(`欢迎，${d.name}`);await accSync()}
+  try{await accDone(await rpc("student_login",{p_username:u,p_password:p}))}
   catch(err){m.textContent=err.code==="BAD_LOGIN"?"账号或密码不对，请再试一次。":err.code==="LOCKED"?"密码输错太多次，请 10 分钟后再试。":"连不上网络，请稍后再试。"}
   $("#accGo").disabled=false};
 $("#accGuest").onclick=()=>{ACC.guest=true;accSave();$("#accBox").hidden=true};
