@@ -235,6 +235,29 @@ body.hurry #qcard{box-shadow:0 0 0 3px rgba(255,106,77,.55),0 6px 22px rgba(30,1
 .brow:nth-child(1){background:#fff4d9}.brow:nth-child(1) .rk{color:var(--sun)}
 .brow .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
 .brow .sc{color:var(--deep);font-weight:900}.brow .vv{font-size:12px;color:var(--muted)}
+.lbkinds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lbkinds button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:16px;font-weight:900;font-size:15px;color:#8a6a3a;background:linear-gradient(180deg,#fff,#fff6e4);border:1px solid var(--hair);box-shadow:var(--soft)}
+.lbkinds button b{font-size:22px;line-height:1}
+.lbkinds button[aria-pressed="true"]{color:#fff;background:linear-gradient(180deg,#ffb35c,#ef6a2e);border-color:transparent;box-shadow:0 4px 0 #b9441d,0 10px 18px -8px rgba(239,90,46,.6)}
+.lbme{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:18px;background:linear-gradient(90deg,#fff1c9,#fff8ea);border:1px solid #f3d58c;font-weight:700;color:#7a4a10}
+.lbme .big{font-family:var(--f-head);font-weight:900;font-size:30px;color:#e0702e;line-height:1}
+.lbme .gap{margin-left:auto;font-size:13px;color:#9a7a4a;text-align:right}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;margin-top:6px}
+.podium:empty{display:none}
+.pd{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;text-align:center}
+.pd .av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--f-head);font-weight:900;font-size:22px;color:#fff;border:3px solid #fff;box-shadow:0 4px 10px -2px rgba(0,0,0,.25)}
+.pd .pn{font-weight:900;font-size:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd .pc{font-size:11px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd .blk{width:100%;border-radius:14px 14px 6px 6px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8px;font-family:var(--f-head);font-weight:900;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.18)}
+.pd .blk i{font-style:normal;font-size:26px;line-height:1}.pd .blk small{font-size:13px;opacity:.95}
+.pd.r1 .av{background:linear-gradient(180deg,#ffd257,#f2a01a);width:62px;height:62px}.pd.r1 .blk{height:110px;background:linear-gradient(180deg,#ffd257,#f2a01a)}
+.pd.r2 .av{background:linear-gradient(180deg,#d9e2ea,#9fb0bf)}.pd.r2 .blk{height:84px;background:linear-gradient(180deg,#d9e2ea,#9fb0bf)}
+.pd.r3 .av{background:linear-gradient(180deg,#f3be8c,#d0864a)}.pd.r3 .blk{height:66px;background:linear-gradient(180deg,#f3be8c,#d0864a)}
+.pd.me .pn{color:#e0702e}
+.brow .cl{font-size:12px;color:var(--muted);margin-left:6px;font-weight:500}
+.brow.me{outline:2px solid #ffb21f;background:#fff4d9}
+.blist.afterpod .brow:nth-child(1):not(.me){background:#fff6e6}.blist.afterpod .brow:nth-child(1) .rk{color:var(--muted)}
+.lbempty{text-align:center;padding:24px 8px;display:flex;flex-direction:column;gap:10px;align-items:center}
 .brow.me{outline:2px solid var(--sun)}
 .tabsw{display:flex;gap:8px}
 .tabsw button{padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);color:var(--muted);font-size:13px}
@@ -826,7 +849,7 @@ body.dshake main{animation:dshake .28s}
       <button class="pillar p-test" id="goTest"><svg class="art" viewBox="0 0 112 112" aria-hidden="true"><rect x="48" y="10" width="16" height="12" rx="4" fill="#fff"/><circle cx="56" cy="62" r="38" fill="#fff" stroke="#e6f4ff" stroke-width="5"/><circle cx="56" cy="62" r="28" fill="#eaf6ff"/><path d="M56 62V40" stroke="#1f78c9" stroke-width="6" stroke-linecap="round"/><path d="M56 62l14 8" stroke="#1f78c9" stroke-width="5" stroke-linecap="round"/><path d="M88 18L74 46h12l-8 24 22-32H88l8-20z" fill="#ffd257" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg><span class="s" id="testStat"></span><span class="n">测试</span><span class="d">60 秒快问快答</span></button>
       <button class="pillar p-duel" id="goDuel"><svg class="art" viewBox="0 0 112 112" aria-hidden="true"><path d="M28 100L66 20" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="M84 100L46 20" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="M64 24l30 6-12 12 10 14-34-6z" fill="#ff9a2e" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M48 24l-30 6 12 12-10 14 34-6z" fill="#3e9cf0" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M56 70l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#ffd257" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span class="s">两队同屏</span><span class="n">对战</span><span class="d">同题抢答 · 拼句赛跑</span></button>
     </div>
-    <div class="row center"><button class="chip" id="goBoard">心版榜</button><a class="chip" href="teacher.html" style="text-decoration:none">老师后台</a><button class="chip" id="goImport">导入经文库</button><button class="chip vgo" id="goVocab" hidden>神学词汇（预览）</button><button class="chip" id="goTeacher" hidden>老师后台</button></div>
+    <div class="row center"><button class="chip" id="goBoard">🏆 心版榜</button><a class="chip" href="teacher.html" style="text-decoration:none">老师后台</a><button class="chip" id="goImport">导入经文库</button><button class="chip vgo" id="goVocab" hidden>神学词汇（预览）</button><button class="chip" id="goTeacher" hidden>老师后台</button></div>
   </section>
 
   <section class="screen" id="map" hidden>
@@ -886,9 +909,16 @@ body.dshake main{animation:dshake .28s}
 
   <section class="screen" id="board" hidden>
     <div class="panel">
-      <div class="row" style="justify-content:space-between"><h2>心版榜</h2>
-        <div class="tabsw"><button id="bClass" aria-pressed="true">全班</button><button id="bLocal" aria-pressed="false">这台设备</button></div></div>
-      <p class="hint" id="boardHint"></p><div class="blist" id="boardList"></div>
+      <div class="row" style="justify-content:space-between;align-items:center"><h2>心版榜</h2><button class="chip" id="bRefresh" type="button">刷新</button></div>
+      <div class="lbkinds" id="bKinds"><button data-k="stars" aria-pressed="true"><b>★</b>星星榜</button><button data-k="test" aria-pressed="false"><b>⚡</b>测验榜</button><button data-k="time" aria-pressed="false"><b>⏱</b>勤练榜</button></div>
+      <div class="row" style="justify-content:space-between">
+        <div class="tabsw" id="bScope"><button data-v="all" aria-pressed="true">全部同学</button><button data-v="class" aria-pressed="false">我的班</button></div>
+        <div class="tabsw" id="bPeriod"><button data-v="week" aria-pressed="true">本周</button><button data-v="all" aria-pressed="false">累计</button></div>
+      </div>
+      <p class="hint" id="boardHint"></p>
+      <div id="boardMe"></div>
+      <div class="podium" id="boardPod"></div>
+      <div class="blist" id="boardList"></div>
     </div>
   </section>
 
@@ -1557,7 +1587,7 @@ async function initClass(){try{if(!window.claude||!claude.use)return;const [db,u
   DB=db;USER=user;myId=await user.id();
   try{const mine=await DB.doc("progress/"+myId).get();if(mine.exists){const lv=(mine.data()||{}).lv||{};let ch=false;for(const k in lv){if((lv[k]||0)>(MEM[k]||0)){MEM[k]=lv[k];ch=true}}if(ch){store.set("xb4-mem",MEM);if(!$("#home").hidden)renderHome()}}}catch(e){}
   try{if(await user.canEdit())$("#goTeacher").hidden=false}catch(e){}
-  DB.collection("scores").orderBy("total","desc").limit(50).onSnapshot(s=>{classRows=s.docs.map(d=>({id:d.id,...d.data()}));if(!$("#board").hidden)renderBoard()},()=>{});
+  DB.collection("scores").orderBy("total","desc").limit(50).onSnapshot(s=>{classRows=s.docs.map(d=>({id:d.id,...d.data()}))},()=>{});
   if(TBEST||memCount())pushClass()}catch(e){}}
 let pushingP=false,USER=null,PROG=null,tchUnsub=null;
 async function pushProgress(){if(!DB||!myId||pushingP)return;pushingP=true;
@@ -1579,16 +1609,42 @@ async function renderTeacher(){const rows=(PROG||[]).map(r=>{const lv=r.lv||{};c
 let pushing=false;
 async function pushClass(){if(!DB||!myId||pushing)return;pushing=true;
   try{await DB.doc("scores/"+myId).set({tag:nick(),total:TBEST,engraved:memCount(),updatedAt:Date.now()})}catch(e){}pushing=false;pushProgress()}
-function renderBoard(){$("#bClass").setAttribute("aria-pressed",boardTab==="class");$("#bLocal").setAttribute("aria-pressed",boardTab==="local");const list=$("#boardList");
-  if(boardTab==="class"){if(!DB){$("#boardHint").textContent="全班榜需要登录后的账号打开这个页面。现在可以先看“这台设备”上的成绩。";list.innerHTML="";return}
-    $("#boardHint").textContent="按“测试”最高分排名，旁边是刻上心版的经文数。";
-    const rows=(classRows||[]).filter(r=>(r.total||0)>0||(r.engraved||0)>0);
-    list.innerHTML=rows.length?rows.map((r,i)=>`<div class="brow${r.id===myId?" me":""}"><span class="rk">${i+1}</span><span class="nm"></span><span class="vv">刻成 ${r.engraved||0} 节</span><span class="sc">${r.total||0}</span></div>`).join(""):`<p class="hint">还没有人上榜。</p>`;
-    list.querySelectorAll(".nm").forEach((el,i)=>el.textContent=String(rows[i].tag||"玩家").slice(0,12))}
-  else{$("#boardHint").textContent="这台设备上每一次测试的成绩。";
-    list.innerHTML=LOCALB.length?LOCALB.slice(0,20).map((r,i)=>`<div class="brow"><span class="rk">${i+1}</span><span class="nm"></span><span class="vv">60秒测试</span><span class="sc">${r.score}</span></div>`).join(""):`<p class="hint">还没有成绩。</p>`;
-    list.querySelectorAll(".nm").forEach((el,i)=>el.textContent=LOCALB[i].name)}}
-$("#bClass").onclick=()=>{boardTab="class";renderBoard()};$("#bLocal").onclick=()=>{boardTab="local";renderBoard()};
+/* ===== 心版榜：所有登录的同学互相看得到 ===== */
+const LB={kind:"stars",scope:"all",period:"week",seq:0};
+const LBK={stars:{unit:"颗星",hint:"闯关拿到的星星总数（普通训练＋高阶训练）。",noPeriod:true},
+  test:{unit:"分",hint:"60 秒测试的最高分。"},time:{unit:"分钟",hint:"练习时长：页面开着并且在做题才计时。"}};
+function lbPress(box,v){box.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.k||b.dataset.v)===v))}
+async function renderBoard(){
+  lbPress($("#bKinds"),LB.kind);lbPress($("#bScope"),LB.scope);lbPress($("#bPeriod"),LB.period);
+  const K=LBK[LB.kind];$("#bPeriod").hidden=!!K.noPeriod;
+  const per=K.noPeriod?"all":LB.period;
+  $("#boardHint").textContent=K.hint+(K.noPeriod?"":per==="week"?"本周从周一算起。":"从注册到现在的累计。");
+  const me=$("#boardMe"),pod=$("#boardPod"),list=$("#boardList");
+  if(!ACC.tok){me.innerHTML="";pod.innerHTML="";
+    list.innerHTML=`<div class="lbempty"><p class="hint">登录以后才能上榜，也能看到大家的排名。</p><button class="btn" id="lbLogin" type="button">登录或注册</button></div>`;
+    $("#lbLogin").onclick=()=>showLogin();return}
+  const my=++LB.seq;list.innerHTML=`<p class="hint" style="text-align:center;padding:16px">正在载入……</p>`;pod.innerHTML="";me.innerHTML="";
+  await flushQ();
+  let d;try{d=await rpc("leaderboard",{p_token:ACC.tok,p_kind:LB.kind,p_period:per,p_scope:LB.scope})}
+  catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}list.innerHTML=`<p class="msg err" style="text-align:center">连不上网络，请稍后点“刷新”。</p>`;return}
+  if(my!==LB.seq)return;
+  const rows=d.rows||[],U=K.unit;
+  if(d.me){const above=rows.filter(r=>r.rank<d.me.rank).slice(-1)[0];
+    me.innerHTML=`<div class="lbme"><span>我的名次</span><span class="big">${d.me.rank}</span><span>/ ${d.total} 人 · ${d.me.val} ${U}</span>
+      <span class="gap">${d.me.rank===1?"你是第一名！":above?`再加 ${above.val-d.me.val+1} ${U}<br>就能超过前一名`:""}</span></div>`}
+  else me.innerHTML=`<div class="lbme"><span>你还没上榜</span><span class="gap">${LB.kind==="stars"?"去闯一关":LB.kind==="test"?"去考一次 60 秒测试":"去练一会儿"}，就能上榜。</span></div>`;
+  if(!rows.length){list.innerHTML=`<div class="lbempty"><p class="hint">这个榜还没有人。第一名就是你！</p></div>`;return}
+  const top=rows.filter(r=>r.rank<=3).slice(0,3),rest=rows.slice(top.length);
+  if(top.length===3){const order=[top[1],top[0],top[2]];
+    pod.innerHTML=order.map(r=>`<div class="pd r${r.rank}${r.me?" me":""}"><span class="av">${esc([...(r.name||"?")][0])}</span><span class="pn"></span><span class="pc"></span><div class="blk"><i>${r.rank}</i><small>${r.val} ${U}</small></div></div>`).join("");
+    pod.querySelectorAll(".pd").forEach((el,i)=>{el.querySelector(".pn").textContent=order[i].name;el.querySelector(".pc").textContent=order[i].cls})}
+  const L=top.length===3?rest:rows;list.classList.toggle("afterpod",top.length===3);
+  list.innerHTML=L.map(r=>`<div class="brow${r.me?" me":""}"><span class="rk">${r.rank}</span><span class="nm"><span class="n"></span><span class="cl"></span></span><span class="vv"></span><span class="sc">${r.val} ${U}</span></div>`).join("");
+  list.querySelectorAll(".brow").forEach((el,i)=>{el.querySelector(".n").textContent=L[i].name;el.querySelector(".cl").textContent=L[i].cls})}
+$("#bKinds").querySelectorAll("button").forEach(b=>b.onclick=()=>{LB.kind=b.dataset.k;renderBoard()});
+$("#bScope").querySelectorAll("button").forEach(b=>b.onclick=()=>{LB.scope=b.dataset.v;renderBoard()});
+$("#bPeriod").querySelectorAll("button").forEach(b=>b.onclick=()=>{LB.period=b.dataset.v;renderBoard()});
+$("#bRefresh").onclick=()=>renderBoard();
 
 function parseLib(text){return text.replace(/\r/g,"").split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean).map(b=>b.split("\n").map(s=>s.trim()).filter(Boolean)).filter(l=>l.length>=2).map(l=>({ref:l[0],mk:l[1]}))}
 $("#importDo").onclick=()=>{const raw=parseLib($("#importText").value),m=$("#importMsg");
