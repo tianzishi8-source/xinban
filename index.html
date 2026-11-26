@@ -1219,11 +1219,11 @@ function renderPacks(){
   const chip=(kind,key,label,n)=>`<button class="pk${PACK.kind===kind&&PACK.key===key?" on":""}" data-kind="${kind}" data-key="${esc(key)}">${esc(label)}<small>${n}</small></button>`;
   let html="";
   if(packTab==="book"){for(const t of ["旧约","新约"]){const bs=uniq(ALL.filter(v=>v.t===t).map(v=>v.book));
-      html+=`<div class="pkrow"><span class="lbl">${t}</span>${bs.map(b=>chip("book",b,b,ALL.filter(v=>v.book===b).length)).join("")}</div>`}}
+      html+=`<div class="pkrow"><span class="lbl">${t}</span>${bs.map(b=>{const l=ALL.filter(v=>v.book===b),d=l.filter(v=>MEM[v.ref]).length;return chip("book",b,b,d?`${d}/${l.length}`:l.length)}).join("")}</div>`}}
   else if(packTab==="lesson"){for(const [n,label] of [["n1","n1 背诵经文（第一至十二课）"],["n2","n2 背诵经文（以“耶稣基督”为主题）"]]){
       const ls=SRCS.filter(x=>x.startsWith(n+" ")).sort((a,b)=>cnNum(a)-cnNum(b));
       html+=`<div class="pkrow"><span class="lbl">${label}</span>${ls.map(x=>chip("src",x,x.replace(/^n\d 背诵经文·/,""),ALL.filter(v=>v.src.includes(x)).length)).join("")}</div>`}}
-  else if(packTab==="text"){html=`<div class="pkrow">${TXT().map(T=>chip("text",T.key,EN()?T.en:T.key,TEXTV.filter(v=>v.book===T.key).length)).join("")}</div><p class="hint">先过单行的关，再过${EN()?"更长":"两行、三四行"}的关，最后背全文。</p>`}
+  else if(packTab==="text"){html=`<div class="pkrow">${TXT().map(T=>{const l=TEXTV.filter(v=>v.book===T.key),d=l.filter(v=>MEM[v.ref]).length;return chip("text",T.key,EN()?T.en:T.key,d?`${d}/${l.length}`:l.length)}).join("")}</div><p class="hint">先过单行的关，再过${EN()?"更长":"两行、三四行"}的关，最后背全文。</p>`}
   else if(packTab==="src"){const ls=SRCS.filter(x=>!/^n\d /.test(x));
       html+=`<div class="pkrow">${ls.map(x=>chip("src",x,x,ALL.filter(v=>v.src.includes(x)).length)).join("")}${CUSTOM.length?chip("custom","我导入的","我导入的",CUSTOM.length):""}</div>`}
   else{html=`<input class="search" id="searchBox" placeholder="输入经文里的词或出处，例如：好牧人、约 3:16" value="${PACK.kind==="search"?esc(PACK.key):""}"><p class="hint">按回车，搜到的经文会组成一个临时经文包（最多 200 条）。</p><p class="msg err" id="searchMsg"></p>`}
@@ -1235,7 +1235,7 @@ $("#packTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{packTab=b.da
 $("#packToggle").onclick=()=>{packOpen=!packOpen;renderPacks()};
 function renderHome(){
   renderPacks();
-  $("#memStat").textContent=`过关 ${UNITS.filter(u=>MEM[u.key]).length}/${UNITS.length}`;$("#testStat").textContent=TBEST?`最高 ${TBEST}`:"还没考过";
+  $("#memStat").textContent=`${packTitle(PACK)} · 过关 ${UNITS.filter(u=>MEM[u.key]).length}/${UNITS.length}`;$("#testStat").textContent=TBEST?`最高 ${TBEST}`:"还没考过";
   drawHwBar();
   $("#hudStars").textContent=Object.keys(MEM).filter(k=>!k.includes("#")).reduce((a,k)=>a+(MEM[k]||0),0);$("#hudEng").textContent=memCount();
 }
