@@ -727,6 +727,8 @@ body[data-lang="en"] .opt,body[data-lang="en"] .tile{font-family:Georgia,"Times 
 .typebox.nope{animation:shake .35s}
 
 /* 补全句子 */
+.ch.gone{text-shadow:none!important;-webkit-text-fill-color:transparent;display:inline-block;min-width:.9em;white-space:pre;vertical-align:baseline}
+.tablet,.vbig,.qcard,.qtext,#rvVerse,.readit,.duelQ{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .erasebox{display:inline;padding:2px 4px;margin:0 2px;border-radius:8px;outline:2px dashed rgba(196,130,58,.55);outline-offset:1px;background:rgba(255,246,228,.6)}
 .typebox.nope{animation:shake .35s}
 /* 对战：竞技场 */
@@ -937,7 +939,7 @@ body.dshake main{animation:dshake .28s}
       <div class="lbkinds" id="bKinds"><button data-k="stars" aria-pressed="true"><b>★</b>星星榜</button><button data-k="test" aria-pressed="false"><b>⚡</b>测验榜</button><button data-k="time" aria-pressed="false"><b>⏱</b>勤练榜</button></div>
       <div class="row" style="justify-content:space-between">
         <div class="tabsw" id="bScope"><button data-v="all" aria-pressed="true">全部同学</button><button data-v="class" aria-pressed="false">我的班</button></div>
-        <div class="tabsw" id="bPeriod"><button data-v="week" aria-pressed="true">本周</button><button data-v="all" aria-pressed="false">累计</button></div>
+        <div class="tabsw" id="bPeriod"><button data-v="day" aria-pressed="true">今日</button><button data-v="week" aria-pressed="false">本周</button><button data-v="all" aria-pressed="false">总榜</button></div>
       </div>
       <div class="lbpacks" id="bPacks" hidden></div>
       <p class="hint" id="boardHint"></p>
@@ -1345,7 +1347,7 @@ function typeRound(o){
     const typedSet=new Set(order.slice(0,m)),nextI=order[m];
     $("#mVerse").innerHTML=ch.map((c,i)=>{let cl="";
       if(typedSet.has(i))cl=" typed";else if(hide.has(i)&&isW(c))cl=reveal.has(i)?" hintc":" gone";
-      if(i===nextI)cl+=err?" err":" next";return `<span class="ch${cl}">${esc(c)}</span>`}).join("");
+      if(i===nextI)cl+=err?" err":" next";return `<span class="ch${cl}">${cl.includes(" gone")?blankOf(c):esc(c)}</span>`}).join("");
     if(cards){const lastTyped=m?order[m-1]:-1;$("#mCards").querySelectorAll(".tile").forEach(t=>{const p=M.ps[+t.dataset.i];t.classList.toggle("used2",p.e-1<=lastTyped||ch.slice(p.s,p.e).every((c,j)=>!isW(c)||p.s+j<=lastTyped))})}
     $("#mSay").innerHTML=(err?"红色的地方打错了，删掉重打。":o.say)+` <b>${m} / ${target.length}</b>`;
     if(m>=target.length)done()};
@@ -1376,6 +1378,8 @@ function rBank(n){const bl=pickRand(n||5);let k=0;
       else{M.miss++;sfx.bad();b.classList.add("wrong","shake");setTimeout(()=>b.classList.remove("wrong","shake"),400)}})};draw()}
 
 /* ===== 补：擦去一句重要的话，让学生补全。提示一：只露出非核心词 2 秒；提示二：整句露出 3 秒 ===== */
+/* 擦掉的位置只放空白，不放原字：既没有“印记”，打错时也不会露出正确的字 */
+function blankOf(c){return /[\u3400-\u9fff\uf900-\ufaff]/.test(c)?"\u3000":"\u2007".repeat(Math.max(1,c.length))}
 function rErase(){const ch=M.ch,ks=keysOf(M.v),unit=EN()?"词":"字";
   const cand=M.ps.map((p,i)=>{let s=p.s,e=p.e;while(s<e&&!isW(ch[s]))s++;while(e>s&&!isW(ch[e-1]))e--;
       const n=ch.slice(s,e).filter(isW).length,kk=ks.filter(k=>k.cat!=="句"&&k.s>=s&&k.e<=e);return {i,s,e,n,kk}})
@@ -1389,14 +1393,14 @@ function rErase(){const ch=M.ch,ks=keysOf(M.v),unit=EN()?"词":"字";
   let core=new Set();c.kk.forEach(k=>{for(let i=k.s;i<k.e;i++)core.add(i)});
   if(!core.size){[...idx].sort((a,b)=>ch[b].length-ch[a].length).slice(0,Math.max(1,Math.round(idx.length*.4))).forEach(i=>core.add(i))}
   let peek=0,tries=0,hint1=false,hint2=false,done=false,peekT=0;
-  const draw=()=>{const {m}=matchTyped(box.value,target),got=new Set(idx.slice(0,m));let h="";
+  const draw=()=>{const n=Math.min(units(box.value).length,target.length);let h="";
     for(let i=0;i<ch.length;i++){
       if(i===c.s)h+='<span class="erasebox">';
-      if(i>=c.s&&i<c.e&&isW(ch[i])){let cl=got.has(i)?" typed":peek===2||(peek===1&&!core.has(i))?" hintc":" gone";h+=`<span class="ch${cl}">${esc(ch[i])}</span>`}
+      if(i>=c.s&&i<c.e&&isW(ch[i])){const cl=done?" typed":peek===2||(peek===1&&!core.has(i))?" hintc":" gone";h+=`<span class="ch${cl}">${cl===" gone"?blankOf(ch[i]):esc(ch[i])}</span>`}
       else h+=`<span class="ch">${esc(ch[i])}</span>`;
       if(i===c.e-1)h+='</span>'}
     $("#mVerse").innerHTML=h;
-    $("#mSay").innerHTML=tries>=2?`正确的是“<b>${esc(core0(right))}</b>”，照着写出来。`:`有一句被擦掉了，把它补出来。写完点“确定”。 <b>${m} / ${target.length}</b>`};
+    $("#mSay").innerHTML=tries>=2?`正确的是“<b>${esc(core0(right))}</b>”，照着写出来。`:`有一句被擦掉了，凭记忆把它写出来，写完点“确定”。 <b>已写 ${n} / ${target.length} ${unit}</b>`};
   const core0=t=>t.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,"");
   $("#mArea").innerHTML=`<textarea id="mType" class="typebox" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="写出被擦掉的这一句（标点${EN()?"、大小写":""}不用管）"></textarea>
     <div class="acts"><button class="btn" id="mOk">确定</button><button class="chip" id="mH1">提示一 · 看 2 秒</button><button class="chip" id="mH2">提示二 · 看整句 3 秒</button></div>`;
@@ -1539,6 +1543,16 @@ function makeQ(pool,noOrder){
   if(t==="ref"){const ch=tok(v.zh),[a,b]=clipRange(ps,0);return {v,type:"出处",html:esc(ch.slice(a,b).join(""))+(b<ch.length?'<span class="dim">……</span>':""),opts:refOpts(v),ans:v.full,small:true}}
   const n=Math.min(3,ps.length),start=Math.floor(Math.random()*(ps.length-n+1));
   return {v,type:"排序",order:ps.slice(start,start+n).map(p=>core(p.t))}}
+
+/* ===== 只能自己打字：禁止复制经文、禁止往答题框里粘贴或拖放 ===== */
+(()=>{const free=t=>t&&t.closest&&t.closest("#accForm,#importText,#searchBox,#nick,.allowcopy");
+  const ans=t=>t&&t.closest&&t.closest(".typebox,#vIn,#rvIn,.vin");
+  const nope=()=>{try{toast("要自己打出来哦")}catch(e){}};
+  ["copy","cut"].forEach(ev=>document.addEventListener(ev,e=>{if(!free(e.target))e.preventDefault()},true));
+  document.addEventListener("paste",e=>{if(ans(e.target)){e.preventDefault();nope()}},true);
+  document.addEventListener("drop",e=>{if(ans(e.target)){e.preventDefault();nope()}},true);
+  document.addEventListener("beforeinput",e=>{if(ans(e.target)&&/^insertFrom(Paste|Drop|YankReplace)$/.test(e.inputType||"")){e.preventDefault();nope()}},true);
+  document.addEventListener("contextmenu",e=>{if(e.target&&e.target.closest&&e.target.closest(".tablet,.qcard,#rvVerse"))e.preventDefault()},true)})();
 
 /* ===== 每日作业 + 温习摸底 ===== */
 const jktDay=()=>{try{return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date())}catch(e){return new Date().toISOString().slice(0,10)}};
@@ -1742,15 +1756,15 @@ let pushing=false;
 async function pushClass(){if(!DB||!myId||pushing)return;pushing=true;
   try{await DB.doc("scores/"+myId).set({tag:nick(),total:TBEST,engraved:memCount(),updatedAt:Date.now()})}catch(e){}pushing=false;pushProgress()}
 /* ===== 心版榜：所有登录的同学互相看得到 ===== */
-const LB={kind:"stars",scope:"all",period:"week",seq:0,pack:null,packs:null};
-const LBK={stars:{unit:"颗星",hint:"闯关拿到的星星总数（普通训练＋高阶训练）。",noPeriod:true},
+const LB={kind:"stars",scope:"all",period:"day",seq:0,pack:null,packs:null};
+const LBK={stars:{unit:"颗星",hint:"闯关拿到的星星（普通训练＋高阶训练）。今日、本周按这段时间里过关拿到的星星算，同一关只算最高的一次。"},
   test:{unit:"分",hint:"60 秒测试的最高分，每个经文包分开排（书卷长短不同，难度也不同）。"},time:{unit:"分钟",hint:"练习时长：页面开着并且在做题才计时。"}};
 function lbPress(box,v){box.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.k||b.dataset.v)===v))}
 async function renderBoard(){
   lbPress($("#bKinds"),LB.kind);lbPress($("#bScope"),LB.scope);lbPress($("#bPeriod"),LB.period);
   const K=LBK[LB.kind];$("#bPeriod").hidden=!!K.noPeriod;
   const per=K.noPeriod?"all":LB.period;
-  $("#boardHint").textContent=K.hint+(K.noPeriod?"":per==="week"?"本周从周一算起。":"从注册到现在的累计。");
+  $("#boardHint").textContent=K.hint+(per==="day"?"今日从零点算起。":per==="week"?"本周从周一算起。":"总榜是从注册到现在的累计。");
   const me=$("#boardMe"),pod=$("#boardPod"),list=$("#boardList"),pk=$("#bPacks");
   pk.hidden=LB.kind!=="test"||!ACC.tok;
   if(!ACC.tok){me.innerHTML="";pod.innerHTML="";
@@ -1767,7 +1781,7 @@ async function renderBoard(){
     pk.querySelectorAll("button").forEach(b=>b.onclick=()=>{LB.pack=b.dataset.p;renderBoard()});
     const on=pk.querySelector('[aria-pressed="true"]');if(on)on.scrollIntoView({block:"nearest",inline:"center"});
     if(!LB.pack){list.innerHTML=`<div class="lbempty"><p class="hint">还没有人考过 60 秒测试。第一名就是你！</p></div>`;return}
-    $("#boardHint").textContent=(LB.pack===LB.hw?`这是老师布置的作业：“${LB.pack}”的 60 秒测试最高分。`:LB.hw?`“${LB.pack}”是自由练习榜，不算作业（作业是“${LB.hw}”）。`:`“${LB.pack}”的 60 秒测试最高分。`)+"每个经文包分开排。"+(per==="week"?"本周从周一算起。":"")}
+    $("#boardHint").textContent=(LB.pack===LB.hw?`这是老师布置的作业：“${LB.pack}”的 60 秒测试最高分。`:LB.hw?`“${LB.pack}”是自由练习榜，不算作业（作业是“${LB.hw}”）。`:`“${LB.pack}”的 60 秒测试最高分。`)+"每个经文包分开排。"+(per==="day"?"今日从零点算起。":per==="week"?"本周从周一算起。":"")}
   let d;try{d=await rpc("leaderboard",{p_token:ACC.tok,p_kind:LB.kind,p_period:per,p_scope:LB.scope,p_pack:LB.kind==="test"?LB.pack:null})}
   catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}list.innerHTML=`<p class="msg err" style="text-align:center">连不上网络，请稍后点“刷新”。</p>`;return}
   if(my!==LB.seq)return;
