@@ -257,6 +257,12 @@ body.hurry #qcard{box-shadow:0 0 0 3px rgba(255,106,77,.55),0 6px 22px rgba(30,1
 .brow .cl{font-size:12px;color:var(--muted);margin-left:6px;font-weight:500}
 .brow.me{outline:2px solid #ffb21f;background:#fff4d9}
 .blist.afterpod .brow:nth-child(1):not(.me){background:#fff6e6}.blist.afterpod .brow:nth-child(1) .rk{color:var(--muted)}
+.lbpacks{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.lbpacks button{flex:0 0 auto;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#7a5a2a;background:#fff;border:1px solid var(--hair);box-shadow:var(--soft);white-space:nowrap}
+.lbpacks button small{font-weight:500;color:var(--muted);margin-left:4px}
+.lbpacks button.mine::after{content:"·我考过";font-size:11px;color:#e0702e;margin-left:4px;font-weight:700}
+.lbpacks button[aria-pressed="true"]{color:#fff;background:linear-gradient(180deg,#ff9b5a,#ea6a2c);border-color:transparent}
+.lbpacks button[aria-pressed="true"] small,.lbpacks button[aria-pressed="true"].mine::after{color:#ffe7d6}
 .lbempty{text-align:center;padding:24px 8px;display:flex;flex-direction:column;gap:10px;align-items:center}
 .brow.me{outline:2px solid var(--sun)}
 .tabsw{display:flex;gap:8px}
@@ -915,6 +921,7 @@ body.dshake main{animation:dshake .28s}
         <div class="tabsw" id="bScope"><button data-v="all" aria-pressed="true">全部同学</button><button data-v="class" aria-pressed="false">我的班</button></div>
         <div class="tabsw" id="bPeriod"><button data-v="week" aria-pressed="true">本周</button><button data-v="all" aria-pressed="false">累计</button></div>
       </div>
+      <div class="lbpacks" id="bPacks" hidden></div>
       <p class="hint" id="boardHint"></p>
       <div id="boardMe"></div>
       <div class="podium" id="boardPod"></div>
@@ -1527,14 +1534,19 @@ function nextQ(){
   box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(T.busy)return;const ok=b.textContent===q.ans;
     b.classList.add(ok?"right":"wrong");if(ok)burstEl(b,16);else{b.classList.add("shake");box.querySelectorAll(".opt").forEach(x=>{if(x.textContent===q.ans)x.classList.add("right")})}answer(ok,q)})}
 function endTest(){
-  stopNow();stopNow=()=>{};const nb=T.score>TBEST;TBEST=Math.max(TBEST,T.score);store.set("xb4-tbest",TBEST);cloudTest({s:T.score,c:T.right,w:T.wrong,b:T.best,p:packTitle(PACK)});
+  stopNow();stopNow=()=>{};const PT=packTitle(PACK),PB=store.get("xb5-tbest-pack",{}),nb=T.score>(PB[PT]||0);PB[PT]=Math.max(PB[PT]||0,T.score);store.set("xb5-tbest-pack",PB);
+  TBEST=Math.max(TBEST,T.score);store.set("xb4-tbest",TBEST);cloudTest({s:T.score,c:T.right,w:T.wrong,b:T.best,p:PT});
   LOCALB.push({name:nick(),score:T.score,t:Date.now()});LOCALB.sort((a,b)=>b.score-a.score);LOCALB=LOCALB.slice(0,60);store.set("xb4-local",LOCALB);pushClass();
   document.body.classList.remove("hurry");const acc=T.right+T.wrong?Math.round(T.right/(T.right+T.wrong)*100):0,miss=[...T.missed.values()];
   $("#resBox").innerHTML=`<h2>${nb&&T.score?"新纪录！":"时间到"}</h2>
     <div class="stats"><div><b>${T.score}</b><span>得分</span></div><div><b>${T.right}</b><span>答对</span></div><div><b>${acc}%</b><span>正确率</span></div><div><b>${T.best}</b><span>最高连对</span></div></div>
     ${miss.length?`<p class="hint">这几节还不熟，点一下回去记忆：</p><div class="missed">${miss.map(v=>`<button class="vrow" data-r="${esc(v.ref)}"><span class="ref">${esc(short(v.ref))}</span><span class="txt">${esc(v.zh)}</span><span class="go">去记忆 ›</span></button>`).join("")}</div>`:(T.right?`<p class="hint">一题都没错！</p>`:"")}
-    <div class="row center"><button class="btn" id="rAgain">再考 60 秒</button><button class="btn alt" id="rHome">回到首页</button></div>`;
+    <p class="hint" id="rRank"></p>
+    <div class="row center"><button class="btn" id="rAgain">再考 60 秒</button><button class="btn alt" id="rBoard">看“${esc(PT)}”排行</button><button class="btn alt" id="rHome">回到首页</button></div>`;
   show("result");if(T.score){sfx.win();burst(innerWidth/2,innerHeight*.3,70)}
+  $("#rBoard").onclick=()=>{LB.kind="test";LB.pack=PT;show("board");renderBoard()};
+  if(ACC.tok&&T.score)(async()=>{try{await flushQ();for(let i=0;i<20&&Q.t.length;i++)await new Promise(r=>setTimeout(r,200));const d=await rpc("leaderboard",{p_token:ACC.tok,p_kind:"test",p_period:"all",p_scope:"all",p_pack:PT});
+    const el=$("#rRank");if(el&&d.me)el.innerHTML=`你在“${esc(PT)}”测验榜排第 <b style="color:#e0702e;font-size:18px">${d.me.rank}</b> 名（共 ${d.total} 人）`}catch(e){}})();
   $("#rAgain").onclick=startTest;$("#rHome").onclick=()=>show("home");
   $("#resBox").querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const i=UNITS.findIndex(u=>u.ref===b.dataset.r);if(i>=0)playLevel(i)})}
 
@@ -1610,22 +1622,32 @@ let pushing=false;
 async function pushClass(){if(!DB||!myId||pushing)return;pushing=true;
   try{await DB.doc("scores/"+myId).set({tag:nick(),total:TBEST,engraved:memCount(),updatedAt:Date.now()})}catch(e){}pushing=false;pushProgress()}
 /* ===== 心版榜：所有登录的同学互相看得到 ===== */
-const LB={kind:"stars",scope:"all",period:"week",seq:0};
+const LB={kind:"stars",scope:"all",period:"week",seq:0,pack:null,packs:null};
 const LBK={stars:{unit:"颗星",hint:"闯关拿到的星星总数（普通训练＋高阶训练）。",noPeriod:true},
-  test:{unit:"分",hint:"60 秒测试的最高分。"},time:{unit:"分钟",hint:"练习时长：页面开着并且在做题才计时。"}};
+  test:{unit:"分",hint:"60 秒测试的最高分，每个经文包分开排（书卷长短不同，难度也不同）。"},time:{unit:"分钟",hint:"练习时长：页面开着并且在做题才计时。"}};
 function lbPress(box,v){box.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.k||b.dataset.v)===v))}
 async function renderBoard(){
   lbPress($("#bKinds"),LB.kind);lbPress($("#bScope"),LB.scope);lbPress($("#bPeriod"),LB.period);
   const K=LBK[LB.kind];$("#bPeriod").hidden=!!K.noPeriod;
   const per=K.noPeriod?"all":LB.period;
   $("#boardHint").textContent=K.hint+(K.noPeriod?"":per==="week"?"本周从周一算起。":"从注册到现在的累计。");
-  const me=$("#boardMe"),pod=$("#boardPod"),list=$("#boardList");
+  const me=$("#boardMe"),pod=$("#boardPod"),list=$("#boardList"),pk=$("#bPacks");
+  pk.hidden=LB.kind!=="test"||!ACC.tok;
   if(!ACC.tok){me.innerHTML="";pod.innerHTML="";
     list.innerHTML=`<div class="lbempty"><p class="hint">登录以后才能上榜，也能看到大家的排名。</p><button class="btn" id="lbLogin" type="button">登录或注册</button></div>`;
     $("#lbLogin").onclick=()=>showLogin();return}
   const my=++LB.seq;list.innerHTML=`<p class="hint" style="text-align:center;padding:16px">正在载入……</p>`;pod.innerHTML="";me.innerHTML="";
   await flushQ();
-  let d;try{d=await rpc("leaderboard",{p_token:ACC.tok,p_kind:LB.kind,p_period:per,p_scope:LB.scope})}
+  if(LB.kind==="test"){
+    try{LB.packs=await rpc("leaderboard_packs",{p_token:ACC.tok})}catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}LB.packs=LB.packs||[]}
+    if(my!==LB.seq)return;const P=LB.packs||[];
+    if(!LB.pack||!P.some(x=>x.pack===LB.pack)){const cur=packTitle(PACK);LB.pack=(P.find(x=>x.pack===cur)||P.find(x=>x.mine)||P[0]||{}).pack||null}
+    pk.innerHTML=P.map(x=>`<button type="button" data-p="${esc(x.pack)}" class="${x.mine?"mine":""}" aria-pressed="${x.pack===LB.pack}">${esc(x.pack)}<small>${x.players}人</small></button>`).join("");
+    pk.querySelectorAll("button").forEach(b=>b.onclick=()=>{LB.pack=b.dataset.p;renderBoard()});
+    const on=pk.querySelector('[aria-pressed="true"]');if(on)on.scrollIntoView({block:"nearest",inline:"center"});
+    if(!LB.pack){list.innerHTML=`<div class="lbempty"><p class="hint">还没有人考过 60 秒测试。第一名就是你！</p></div>`;return}
+    $("#boardHint").textContent=`“${LB.pack}”的 60 秒测试最高分。每个经文包分开排，换个包看上面的按钮。`+(per==="week"?"本周从周一算起。":"")}
+  let d;try{d=await rpc("leaderboard",{p_token:ACC.tok,p_kind:LB.kind,p_period:per,p_scope:LB.scope,p_pack:LB.kind==="test"?LB.pack:null})}
   catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}list.innerHTML=`<p class="msg err" style="text-align:center">连不上网络，请稍后点“刷新”。</p>`;return}
   if(my!==LB.seq)return;
   const rows=d.rows||[],U=K.unit;
