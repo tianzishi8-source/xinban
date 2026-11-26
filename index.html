@@ -266,6 +266,19 @@ body.hurry #qcard{box-shadow:0 0 0 3px rgba(255,106,77,.55),0 6px 22px rgba(30,1
 .lbpacks button.mine::after{content:"·我考过";font-size:11px;color:#e0702e;margin-left:4px;font-weight:700}
 .lbpacks button[aria-pressed="true"]{color:#fff;background:linear-gradient(180deg,#ff9b5a,#ea6a2c);border-color:transparent}
 .lbpacks button[aria-pressed="true"] small,.lbpacks button[aria-pressed="true"].mine::after{color:#ffe7d6}
+.hwbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:20px;background:linear-gradient(90deg,#fff1c9,#fffaf0);border:1px solid #f3d58c;box-shadow:var(--soft)}
+.hwbar.done{background:linear-gradient(90deg,#dff5e8,#f6fffa);border-color:#a8e0bd}
+.hwbar .t{font-weight:900;color:#7a4a10;white-space:nowrap}.hwbar.done .t{color:#23864a}
+.hwbar .pb{flex:1;min-width:120px;height:12px;border-radius:6px;background:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,.12);overflow:hidden}
+.hwbar .pb i{display:block;height:100%;background:linear-gradient(90deg,#ffb35c,#ef6a2e);border-radius:6px}.hwbar.done .pb i{background:linear-gradient(90deg,#7fd6a0,#2fae6a)}
+.hwbar .n{font-weight:900;font-variant-numeric:tabular-nums;color:#e0702e}.hwbar.done .n{color:#2fae6a}
+.hwbar .sub{width:100%;font-size:12px;color:var(--muted)}
+.filled-err{color:#e2552f;text-decoration:underline wavy #ff8a70;display:inline-block}
+.rvcount{font-weight:900;color:#e0702e;font-variant-numeric:tabular-nums}
+.rvform{display:flex;gap:10px;align-items:stretch}.rvform .typebox{flex:1}.rvform .btn{white-space:nowrap}
+.node.rev{background:linear-gradient(180deg,#ffd0c4,#ff7a62)!important;box-shadow:0 6px 0 #b8402d,0 0 18px 4px rgba(255,106,77,.45)!important;animation:beat 1.2s ease-in-out infinite}
+.revb{position:absolute;top:-10px;left:-10px;font-size:12px;font-weight:900;color:#fff;background:#e2552f;border:2px solid #fff;border-radius:999px;padding:0 6px;line-height:20px}
+.mapnote{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;padding:10px 14px;border-radius:16px;background:#ffe9e3;border:1px solid #ffc2b3;color:#a8321f;font-weight:700;font-size:14px}
 .lbempty{text-align:center;padding:24px 8px;display:flex;flex-direction:column;gap:10px;align-items:center}
 .brow.me{outline:2px solid var(--sun)}
 .tabsw{display:flex;gap:8px}
@@ -850,9 +863,10 @@ body.dshake main{animation:dshake .28s}
     <div class="langsw" id="langSw" role="group" aria-label="圣经版本"><button data-l="zh"><b>中文</b><small>和合本</small></button><button data-l="en"><b>English</b><small>ESV</small></button></div>
     <div class="panel">
       <div class="row" style="justify-content:space-between;align-items:center"><div><h2>经文包：<span id="packName"></span></h2><span class="hint" id="packCount"></span></div><button class="btn alt" id="packToggle" style="padding:8px 16px;font-size:14px">换经文包</button></div>
-      <div class="tabsw" id="packTabs" hidden><button data-k="book">书卷</button><button data-k="lesson">课程</button><button data-k="src">资料</button><button data-k="text">祷文·信经</button><button data-k="search">搜索</button></div>
+      <div class="tabsw" id="packTabs" hidden><button data-k="book">书卷</button><button data-k="lesson">课程</button><button data-k="src">资料</button><button data-k="text">祷文·信经·福音</button><button data-k="search">搜索</button></div>
       <div id="packBody" class="packBody" hidden></div>
     </div>
+    <div class="hwbar" id="hwBar" hidden></div>
     <div class="pillars">
       <button class="pillar p-mem" id="goMem"><svg class="art" viewBox="0 0 112 112" aria-hidden="true"><path d="M26 100V46a30 30 0 0 1 60 0v54z" fill="#fff4e0" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><path d="M38 52h36M38 62h36M38 72h28M38 82h32" stroke="#e8b98a" stroke-width="4" stroke-linecap="round"/><path d="M80 104c-8-6-13-10-13-16a6.5 6.5 0 0 1 13-2 6.5 6.5 0 0 1 13 2c0 6-5 10-13 16z" fill="#ff5a3c" stroke="#fff" stroke-width="3"/><path d="M50 28c3-4 5-6 6-10 1 4 3 6 6 10" stroke="#ffd257" stroke-width="3" fill="none" stroke-linecap="round"/></svg><span class="s" id="memStat"></span><span class="n">闯关</span><span class="d">一轮轮练习，把经文刻上心版</span></button>
       <button class="pillar p-test" id="goTest"><svg class="art" viewBox="0 0 112 112" aria-hidden="true"><rect x="48" y="10" width="16" height="12" rx="4" fill="#fff"/><circle cx="56" cy="62" r="38" fill="#fff" stroke="#e6f4ff" stroke-width="5"/><circle cx="56" cy="62" r="28" fill="#eaf6ff"/><path d="M56 62V40" stroke="#1f78c9" stroke-width="6" stroke-linecap="round"/><path d="M56 62l14 8" stroke="#1f78c9" stroke-width="5" stroke-linecap="round"/><path d="M88 18L74 46h12l-8 24 22-32H88l8-20z" fill="#ffd257" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg><span class="s" id="testStat"></span><span class="n">测试</span><span class="d">60 秒快问快答</span></button>
@@ -864,6 +878,7 @@ body.dshake main{animation:dshake .28s}
   <section class="screen" id="map" hidden>
     <div class="maphead"><div><h2 id="mapTitle"></h2><span class="hint" id="mapSub"></span></div><div class="mapstars"><span>★</span><b id="mapStars">0</b></div></div>
     <div class="modesw" role="group" aria-label="训练模式"><button id="modeN" data-m="normal"><b>普通训练</b><small>选词 · 拼词 · 找错，多练几遍</small></button><button id="modeA" data-m="adv"><b>高阶训练</b><small>只看出处，默写整节</small></button></div>
+    <div class="mapnote" id="mapNote" hidden></div>
     <div class="mapbox" id="mapBox"></div>
   </section>
 
@@ -931,6 +946,18 @@ body.dshake main{animation:dshake .28s}
       <div class="blist" id="boardList"></div>
     </div>
   </section>
+
+  <section class="screen" id="review" hidden>
+    <div class="lvhead"><b>温习摸底</b><span class="rvcount" id="rvCount"></span></div>
+    <p class="say" id="rvSay">把空格里的词打出来。答错的经文会变成“待温习”关卡，补完才能开新关。</p>
+    <div class="tablet" id="rvTab" data-stage="3"><svg class="cracks" viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden="true"></svg><p class="vbig" id="rvVerse"></p><div class="vref" id="rvRef"></div></div>
+    <form id="rvForm" class="rvform"><textarea id="rvIn" class="typebox" rows="1" style="height:64px" autocomplete="off" spellcheck="false" placeholder="打出空格里的词"></textarea><button class="btn" id="rvGo" type="submit">提交</button></form>
+    <p class="feedback" id="rvFb"></p>
+  </section>
+
+  <div class="lvstart" id="hwGate" hidden><div class="lvcard"><div class="lvrib">今日作业</div>
+    <p class="lsref" id="hwGateT"></p><p class="hint" id="hwGateD"></p>
+    <button class="btn big" id="hwGateGo" type="button">去做作业</button><button class="btn alt" id="hwGateX" type="button">知道了</button></div></div>
 
   <section class="screen" id="vocab" hidden>
     <div class="panel" id="vList">
@@ -1081,7 +1108,7 @@ function countdown(box,cb){let n=3;const ov=document.createElement("div");ov.cla
 function heatPing(k,score,goal){const dt=$(".duelTop");if(dt){dt.classList.remove("hit");void dt.offsetWidth;dt.classList.add("hit")}
   document.body.classList.remove("dshake");void document.body.offsetWidth;document.body.classList.add("dshake");
   if(score===goal-1){const m=document.createElement("div");m.className="mpoint "+k;m.textContent=(k==="a"?"蓝营":"橙营")+" 赛点！";$("#duelBox").appendChild(m);setTimeout(()=>m.remove(),1400);tone([147,220,294],.8,"triangle",0)}}
-function show(id){if(id!=="duel"){BGM.stop();if(DQ&&DQ.iv){clearInterval(DQ.iv);DQ.iv=0}document.body.classList.remove("dshake")}stopNow();stopNow=()=>{};document.body.dataset.screen=id;["home","map","teacher","mem","test","duelPick","duel","result","board","import","vocab"].forEach(s=>$("#"+s).hidden=s!==id);
+function show(id){if(id!=="duel"){BGM.stop();if(DQ&&DQ.iv){clearInterval(DQ.iv);DQ.iv=0}document.body.classList.remove("dshake")}stopNow();stopNow=()=>{};document.body.dataset.screen=id;["home","map","teacher","mem","test","duelPick","duel","result","board","import","vocab","review"].forEach(s=>$("#"+s).hidden=s!==id);
   $("#homeBtn").hidden=id==="home";scrollTo({top:0});if(id==="home")renderHome()}
 $("#homeBtn").onclick=()=>show("home");
 const CN="一二三四五六七八九十";const cnNum=t=>{const m=t.match(/第([一二三四五六七八九十]+)课/);if(!m)return 99;const x=m[1];if(x==="十")return 10;if(x.startsWith("十"))return 10+CN.indexOf(x[1])+1;if(x.endsWith("十"))return (CN.indexOf(x[0])+1)*10;return CN.indexOf(x)+1};
@@ -1133,19 +1160,40 @@ const TEXTS=[
       "我信【圣灵|人】；我信【圣而公|修】之【教会|物】；",
       "我信【圣徒相通|物】。我信【罪得赦免|物】；",
       "我信【身体复活|物】；我信【永生|物】。阿们。"],
-  enL:["I believe in God, the Father almighty, creator of heaven and earth.","I believe in Jesus Christ, his only Son, our Lord,","who was conceived by the Holy Spirit and born of the virgin Mary.","He suffered under Pontius Pilate, was crucified, died, and was buried;","he descended to hell. The third day he rose again from the dead.","He ascended to heaven and is seated at the right hand of God the Father almighty.","From there he will come to judge the living and the dead.","I believe in the Holy Spirit, the holy catholic church,","the communion of saints, the forgiveness of sins,","the resurrection of the body, and the life everlasting. Amen."]}];
+  enL:["I believe in God, the Father almighty, creator of heaven and earth.","I believe in Jesus Christ, his only Son, our Lord,","who was conceived by the Holy Spirit and born of the virgin Mary.","He suffered under Pontius Pilate, was crucified, died, and was buried;","he descended to hell. The third day he rose again from the dead.","He ascended to heaven and is seated at the right hand of God the Father almighty.","From there he will come to judge the living and the dead.","I believe in the Holy Spirit, the holy catholic church,","the communion of saints, the forgiveness of sins,","the resurrection of the body, and the life everlasting. Amen."]},
+ {key:"福音的定义",zhOnly:true,zhT:[1,3],zhX:[[0,7,"第一部分"],[9,17,"第三部分"]],
+  zh:["福音是对于【犯罪|动】【得罪|动】【神|人】、理应遭受神的【愤怒|物】和【咒诅|物】直至在【地狱|处】中【永远灭亡|动】的人，",
+      "【神|人】通过【耶稣基督|人】的【死|物】和【复活|物】，以【替代性救赎|物】【拯救|动】属自己的【子民|人】，",
+      "领我们【悔改|动】【归信|动】【救主|人】基督，并以他为【主|人】，",
+      "以此【赦免|动】我们的【罪|物】，使我们与神【和好|动】，并赐我们【永远的生命|物】的【作为|物】；",
+      "这作为既在【各各他|处】【成就|动】，",
+      "也就通过【道|物】和【圣灵|人】的【工作|物】在【教会|处】中向【蒙拣选|修】的子民【实施|动】，",
+      "使其被基督的【爱|物】【激励|动】，在【荣耀|物】的【盼望|物】和【忍耐|物】中藉着【神儿子|人】与神【相交|动】，",
+      "【满怀感激|修】地【担当|动】福音的【使命|物】，以【圣洁|物】【公义|物】【事奉|动】神。",
+      "非【信|动】【福音|物】，无人能【脱离|动】神【愤怒|物】的【刑罚|物】。",
+      "替代性救赎是指【守约|动】【施慈爱|动】的神【差遣|动】【基督|人】作为【完全的神|人】和【完全的人|人】作神和人之间的【中保|人】，",
+      "替子民【死|动】在【十字架|物】上，【承担|动】了神【终极性|修】的【愤怒|物】和【刑罚|物】，",
+      "又以【彻底|修】的【顺服|物】得神的【喜悦|物】；",
+      "如此，以基督的【顺服|物】和【受苦|物】，【一次|修】而且【永远|修】地【洗除|动】了【所有子民|人】的所有的【罪|物】；",
+      "基督【第三天|修】从死里【复活|动】，以【大能|物】【显明|动】他是【神的儿子|人】，且为他的子民【胜过|动】【死亡|物】；",
+      "又藉着在【教会|处】中【福音之道|物】和【圣灵|人】的【工作|物】，",
+      "神【重生|动】蒙拣选的子民使他们【认罪|动】【悔改|动】，【信靠|动】【救主|人】基督，以他为【主|人】，",
+      "使他们因基督的【救赎|物】【白白地|修】被【称义|动】，与神【和好|动】，",
+      "【免去|动】【永远的刑罚|物】，【得享|动】神所赐永远的【自由|物】、【荣耀|物】和【美福|物】。"]}
+];
 /* 按 size 行一组；最后剩下太少（不到半组，或只剩 1 行）就并进前一组；size=0 表示全文 */
 function lineChunks(n,size){if(!size||size>=n)return [[0,n-1]];const out=[];for(let a=0;a<n;a+=size)out.push([a,Math.min(n,a+size)-1]);
   const last=out[out.length-1],r=last[1]-last[0]+1;if(out.length>1&&(r<size/2||(r===1&&size>1))){out.pop();out[out.length-1][1]=n-1}return out}
 let TEXTV=[];
-function buildTexts(){TEXTV=TEXTS.flatMap(T=>{const L=EN()?T.enL:T.zh,tiers=EN()?T.enT:T.zhT,name=EN()?T.en:T.key,seen=new Set();
+const TXT=()=>TEXTS.filter(T=>!EN()||T.enL);
+function buildTexts(){TEXTV=TXT().flatMap(T=>{const L=EN()?T.enL:T.zh,tiers=EN()?T.enT:T.zhT,name=EN()?T.en:T.key,seen=new Set();
   return tiers.flatMap(sz=>{const cs=lineChunks(L.length,sz),last=cs[cs.length-1];
     /* 最后一组和前面某一关重复时，改成取最后 sz 行（与上一组有重叠） */
     if(cs.length>1&&seen.has(last.join("-")))cs[cs.length-1]=[L.length-sz,L.length-1];
-    cs.forEach(c=>seen.add(c.join("-")));return cs.map(c=>[c[0],c[1],sz])}).map(([a,b,sz])=>{
+    cs.forEach(c=>seen.add(c.join("-")));return cs.map(c=>[c[0],c[1],sz])}).concat(EN()?[]:(T.zhX||[]).map(([a,b,nm])=>[a,b,-1,nm])).map(([a,b,sz,nm])=>{
     const all=sz===0||(a===0&&b===L.length-1),lab=all?(EN()?"Full":"全文"):a===b?`L${a+1}`:`L${a+1}-${b+1}`,ref=name+" "+lab;
-    const tier=all?"整篇":({1:"单行",2:"两行",3:"三行",4:"四行",5:"五行",8:"八行"})[b-a+1]||(b-a+1)+"行";
-    const v={id:"t:"+ref,book:T.key,abbr:"",t:"祷文",ref,full:name+" · "+(all?"全文":a===b?`第 ${a+1} 行`:`第 ${a+1}–${b+1} 行`),chk:false,src:[],isText:true,tier};
+    const tier=nm||(all?"整篇":({1:"单行",2:"两行",3:"三行",4:"四行",5:"五行",8:"八行"})[b-a+1]||(b-a+1)+"行");
+    const v={id:"t:"+ref,book:T.key,abbr:"",t:"祷文",ref,full:name+" · "+(nm?`${nm}（第 ${a+1}–${b+1} 行）`:all?"全文":a===b?`第 ${a+1} 行`:`第 ${a+1}–${b+1} 行`),chk:false,src:[],isText:true,tier};
     if(EN()){const text=L.slice(a,b+1).map(x=>x.trim()).join(" ");return {...v,zh:text,vb:[],keys:enKeys(tokEn(text)),mk:""}}
     return prep({...v,mk:L.slice(a,b+1).join("")})})})}
 function buildAll(){buildTexts();if(EN()){ALL=DATA.map((d,i)=>{const B=BOOKS[d[0]],r=(EN_BOOK[B[0]]||B[0])+" "+d[1];
@@ -1173,7 +1221,7 @@ function renderPacks(){
   else if(packTab==="lesson"){for(const [n,label] of [["n1","n1 背诵经文（第一至十二课）"],["n2","n2 背诵经文（以“耶稣基督”为主题）"]]){
       const ls=SRCS.filter(x=>x.startsWith(n+" ")).sort((a,b)=>cnNum(a)-cnNum(b));
       html+=`<div class="pkrow"><span class="lbl">${label}</span>${ls.map(x=>chip("src",x,x.replace(/^n\d 背诵经文·/,""),ALL.filter(v=>v.src.includes(x)).length)).join("")}</div>`}}
-  else if(packTab==="text"){html=`<div class="pkrow">${TEXTS.map(T=>chip("text",T.key,EN()?T.en:T.key,TEXTV.filter(v=>v.book===T.key).length)).join("")}</div><p class="hint">先过单行的关，再过${EN()?"更长":"两行、三四行"}的关，最后背全文。</p>`}
+  else if(packTab==="text"){html=`<div class="pkrow">${TXT().map(T=>chip("text",T.key,EN()?T.en:T.key,TEXTV.filter(v=>v.book===T.key).length)).join("")}</div><p class="hint">先过单行的关，再过${EN()?"更长":"两行、三四行"}的关，最后背全文。</p>`}
   else if(packTab==="src"){const ls=SRCS.filter(x=>!/^n\d /.test(x));
       html+=`<div class="pkrow">${ls.map(x=>chip("src",x,x,ALL.filter(v=>v.src.includes(x)).length)).join("")}${CUSTOM.length?chip("custom","我导入的","我导入的",CUSTOM.length):""}</div>`}
   else{html=`<input class="search" id="searchBox" placeholder="输入经文里的词或出处，例如：好牧人、约 3:16" value="${PACK.kind==="search"?esc(PACK.key):""}"><p class="hint">按回车，搜到的经文会组成一个临时经文包（最多 200 条）。</p><p class="msg err" id="searchMsg"></p>`}
@@ -1186,12 +1234,13 @@ $("#packToggle").onclick=()=>{packOpen=!packOpen;renderPacks()};
 function renderHome(){
   renderPacks();
   $("#memStat").textContent=`过关 ${UNITS.filter(u=>MEM[u.key]).length}/${UNITS.length}`;$("#testStat").textContent=TBEST?`最高 ${TBEST}`:"还没考过";
+  drawHwBar();
   $("#hudStars").textContent=Object.keys(MEM).filter(k=>!k.includes("#")).reduce((a,k)=>a+(MEM[k]||0),0);$("#hudEng").textContent=memCount();
 }
-$("#goMem").onclick=async()=>{if(await needEn(LIB))openMap()};
+$("#goMem").onclick=async()=>{if(hwBlock("pack"))return;if(await needEn(LIB))goMap()};
 $("#goTeacher").onclick=()=>openTeacher();
-$("#goTest").onclick=async()=>{if(await needEn(LIB))startTest()};
-$("#goDuel").onclick=async()=>{if(!await needEn(LIB))return;$("#raceRef").textContent=raceVerse().full+(raceVerse().segLabel?`（${raceVerse().segLabel}）`:"");show("duelPick")};
+$("#goTest").onclick=async()=>{if(hwBlock("pack"))return;if(await needEn(LIB))startTest()};
+$("#goDuel").onclick=async()=>{if(hwBlock("all"))return;if(!await needEn(LIB))return;$("#raceRef").textContent=raceVerse().full+(raceVerse().segLabel?`（${raceVerse().segLabel}）`:"");show("duelPick")};
 $("#goBoard").onclick=()=>{show("board");renderBoard()};
 $("#goImport").onclick=()=>show("import");
 
@@ -1212,7 +1261,7 @@ function unitsOf(list){return list.flatMap(v=>{const g=segsOf(v);return g.length
 const unitVerse=u=>u.seg==null?u.v:segVerse(u.v,u.seg);
 const raceVerse=()=>{const u=UNITS[Math.min(CUR,UNITS.length-1)];return u?unitVerse(u):LIB[0]};
 const firstOpen=()=>{const i=UNITS.findIndex(u=>!MEM[u.key]);return i<0?UNITS.length-1:i};
-const unlocked=i=>i===0||!!MEM[UNITS[i-1].key]||!!MEM[UNITS[i].key];
+const unlocked=i=>!!MEM[UNITS[i].key]||((i===0||!!MEM[UNITS[i-1].key])&&!pendingHere().length);
 
 /* ===== 闯关地图 ===== */
 const MARKER=`<svg class="marker" viewBox="0 0 48 48"><path d="M24 43C12 34 5 27 5 18a9.5 9.5 0 0 1 19-3 9.5 9.5 0 0 1 19 3c0 9-7 16-19 25z" fill="#ff6a4d" stroke="#fff" stroke-width="3"/></svg>`;
@@ -1225,12 +1274,14 @@ function renderMap(focus){drawMode();
   box.style.height=(top+U.length*STEP+40)+"px";
   let d="";pts.forEach((p,i)=>{if(!i){d=`M${p.x} ${p.y}`;return}const q=pts[i-1],my=(q.y+p.y)/2;d+=` C${q.x} ${my} ${p.x} ${my} ${p.x} ${p.y}`});
   box.innerHTML=`<svg class="road" viewBox="0 0 ${W} ${top+U.length*STEP+40}" preserveAspectRatio="none"><path d="${d}" stroke="rgba(255,248,232,.82)" stroke-width="20" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#b98a4a" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="2 16"/></svg>`+
-    U.map((u,i)=>{const st=MEM[u.key]||0,lock=!unlocked(i),cls=st?"done":i===cur?"cur":lock?"lock":"";const p=pts[i],right=p.x<W/2;
+    U.map((u,i)=>{const st=MEM[u.key]||0,lock=!unlocked(i),rv=TD.pending.includes(u.key),cls=(st?"done":i===cur?"cur":lock?"lock":"")+(rv?" rev":"");const p=pts[i],right=p.x<W/2;
       return `<button class="node ${cls}" data-i="${i}" style="left:${p.x}px;top:${p.y}px">${lock?'<svg viewBox="0 0 20 20" width="24" height="24"><rect x="4" y="9" width="12" height="9" rx="2" fill="currentColor"/><path d="M7 9V6a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="2" fill="none"/></svg>':i+1}
-        ${ADV[u.key]?'<span class="advb" title="高阶已背整句">背</span>':""}<span class="nstars">${[1,2,3].map(k=>`<span class="${k<=st?"lit":""}">★</span>`).join("")}</span>
+        ${rv?'<span class="revb">温习</span>':""}${ADV[u.key]?'<span class="advb" title="高阶已背整句">背</span>':""}<span class="nstars">${[1,2,3].map(k=>`<span class="${k<=st?"lit":""}">★</span>`).join("")}</span>
         <span class="nlabel" style="${right?"left:80px":"right:80px"}">${esc(u.ref)}${u.sub?" · "+esc(u.sub):""}</span></button>`}).join("")+
     (U[cur]?`<div style="position:absolute;left:${pts[cur].x}px;top:${pts[cur].y}px">${MARKER}</div>`:"");
-  box.querySelectorAll(".node").forEach(n=>n.onclick=()=>{const i=+n.dataset.i;if(!unlocked(i)){n.classList.add("shake");setTimeout(()=>n.classList.remove("shake"),400);toast("先过前一关");return}playLevel(i)});
+  box.querySelectorAll(".node").forEach(n=>n.onclick=()=>{const i=+n.dataset.i;if(!unlocked(i)){n.classList.add("shake");setTimeout(()=>n.classList.remove("shake"),400);toast(pendingHere().length?"先补完温习关":"先过前一关");return}playLevel(i)});
+  const pr=pendingHere(),note=$("#mapNote");if(note){note.hidden=!pr.length;if(pr.length){note.innerHTML=`<span>还有 ${pr.length} 关待温习（红色），补完才能开新关卡</span><button class="btn" type="button" style="padding:6px 14px;font-size:13px">去温习</button>`;
+    note.querySelector("button").onclick=()=>{const i=UNITS.indexOf(pr[0]);if(i>=0)playLevel(i)}}}
   const fi=focus==null?cur:focus;setTimeout(()=>{const n=box.querySelector(`.node[data-i="${fi}"]`);if(n)n.scrollIntoView({block:"center",behavior:RM?"auto":"smooth"})},60)}
 
 function drawMode(){$("#modeN").setAttribute("aria-pressed",MODE==="normal");$("#modeA").setAttribute("aria-pressed",MODE==="adv")}
@@ -1451,6 +1502,7 @@ function rStamp(){const RV=M.u.v,refs=refOpts(RV);
     sealAndFinish()})}
 function finishLevel(){M.done=true;
   const stars=M.miss<=2?3:M.miss<=5?2:1,u=M.u,prev=MEM[u.key]||0;MEM[u.key]=Math.max(prev,stars);
+  tdRoll();if(!prev&&!TD.first.includes(u.key))TD.first.push(u.key);if(TD.pending.includes(u.key)){TD.pending=TD.pending.filter(k=>k!==u.key);TD.cleared=uniq([...(TD.cleared||[]),u.key])}tdSave();setTimeout(hwReport,1500);
   if(M.mode==="adv"){ADV[u.key]=Math.max(ADV[u.key]||0,stars);store.set("xb-adv",ADV)}
   if(u.seg!=null){const g=segsOf(u.v);if(g.every((_,i)=>MEM[segKey(u.v,i)]))MEM[u.v.ref]=Math.min(...g.map((_,i)=>MEM[segKey(u.v,i)]))}
   store.set("xb4-mem",MEM);pushClass();pushProgress();cloudProgress([u.key,u.v.ref]);cloudPlay({k:u.key,m:M.mode==="adv"?"a":"n",s:stars,x:M.miss,t:Date.now()});
@@ -1487,6 +1539,71 @@ function makeQ(pool,noOrder){
   if(t==="ref"){const ch=tok(v.zh),[a,b]=clipRange(ps,0);return {v,type:"出处",html:esc(ch.slice(a,b).join(""))+(b<ch.length?'<span class="dim">……</span>':""),opts:refOpts(v),ans:v.full,small:true}}
   const n=Math.min(3,ps.length),start=Math.floor(Math.random()*(ps.length-n+1));
   return {v,type:"排序",order:ps.slice(start,start+n).map(p=>core(p.t))}}
+
+/* ===== 每日作业 + 温习摸底 ===== */
+const jktDay=()=>{try{return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date())}catch(e){return new Date().toISOString().slice(0,10)}};
+function freshToday(){return {day:jktDay(),hw_pack:null,hw_daily:0,first:[],recent:[],reviewDone:false,checked:false,pending:[],wrongBefore:[]}}
+let TD=(()=>{const t=store.get("xb6-today",null);return t&&t.day===jktDay()?t:{...freshToday(),hw_pack:t&&t.hw_pack||null,hw_daily:t&&t.hw_daily||0,pending:t&&t.pending||[],wrongBefore:t&&t.wrongBefore||[]}})();
+function tdSave(){store.set("xb6-today",TD)}
+function tdRoll(){if(TD.day!==jktDay()){TD={...freshToday(),hw_pack:TD.hw_pack,hw_daily:TD.hw_daily,pending:TD.pending,wrongBefore:TD.wrongBefore};tdSave()}}
+async function tdSync(){if(!ACC.tok)return;try{const d=await rpc("student_today",{p_token:ACC.tok});tdRoll();
+    TD.hw_pack=d.hw_pack||null;TD.hw_daily=d.hw_daily||0;TD.first=uniq([...TD.first,...(d.first_today||[])]);TD.recent=d.recent||[];
+    TD.reviewDone=TD.reviewDone||!!d.review_done;TD.pending=(d.pending||[]).filter(k=>!(TD.cleared||[]).includes(k));TD.wrongBefore=d.wrong_before||[];tdSave();
+    if(!$("#home").hidden)renderHome();if(!$("#map").hidden)renderMap()}catch(e){if(e.code==="SESSION_EXPIRED")sessionGone()}}
+function hwKey(){const t=TD.hw_pack;if(!t)return null;
+  if(ALL.some(v=>v.book===t))return {kind:"book",key:t};if(TEXTS.some(T=>T.key===t))return {kind:"text",key:t};
+  if(SRCS.includes(t))return {kind:"src",key:t};return null}
+function hwState(){const k=ACC.tok&&TD.hw_daily>0?hwKey():null;if(!k)return null;
+  const U=unitsOf(packList(k)),first=new Set(TD.first),done=U.filter(u=>first.has(u.key)).length,left=U.filter(u=>!MEM[u.key]||first.has(u.key)).length,
+    target=Math.min(TD.hw_daily,left);return {k,title:packTitle(k),done,target,ok:done>=target}}
+const inHwPack=()=>{const h=hwState();return !h||(PACK.kind===h.k.kind&&PACK.key===h.k.key)};
+function hwBlock(what){tdRoll();const h=hwState();if(!h||h.ok)return false;if(what!=="all"&&inHwPack())return false;
+  $("#hwGateT").textContent=`${h.title} · 今天还差 ${h.target-h.done} 关`;
+  $("#hwGateD").textContent=`先完成今天的作业（${h.done}/${h.target} 关），其他经文包、对战和词汇才会打开。`;
+  $("#hwGate").hidden=false;$("#hwGateX").onclick=()=>{$("#hwGate").hidden=true};
+  $("#hwGateGo").onclick=async()=>{$("#hwGate").hidden=true;setPack(h.k);renderHome();if(await needEn(LIB))goMap()};return true}
+function drawHwBar(){const b=$("#hwBar");tdRoll();const h=hwState();if(!h){b.hidden=true;return}b.hidden=false;b.classList.toggle("done",h.ok);
+  b.innerHTML=`<span class="t">${h.ok?"✓ 今日作业完成":"今日作业"}</span><span class="pb"><i style="width:${h.target?Math.min(100,h.done/h.target*100):100}%"></i></span><span class="n">${h.done} / ${h.target} 关</span>
+    ${h.ok?"":`<button class="btn" id="hwBarGo" type="button" style="padding:8px 16px;font-size:14px">去做作业</button>`}<span class="sub"></span>`;
+  b.querySelector(".sub").textContent=h.ok?`${h.title}：今天的新关卡完成了，其他经文包也打开了。`:`${h.title}：每天要过 ${TD.hw_daily} 个新关卡。完成前，其他经文包、对战和词汇先锁住。`;
+  const g=$("#hwBarGo");if(g)g.onclick=async()=>{setPack(h.k);renderHome();if(await needEn(LIB))goMap()}}
+function hwReport(){const h=hwState();if(!h||!ACC.tok)return;rpc("student_hw_report",{p_token:ACC.tok,p_pack:h.title,p_new:h.done,p_target:h.target}).catch(()=>{})}
+const pendingHere=()=>UNITS.filter(u=>TD.pending.includes(u.key));
+
+/* 摸底：每天第一次进闯关；从这个经文包已过的关卡里出打字填空 */
+async function goMap(focus){tdRoll();
+  if(!TD.checked){TD.checked=true;tdSave();
+    if(!TD.reviewDone){const passed=UNITS.filter(u=>MEM[u.key]&&!TD.first.includes(u.key));if(passed.length>=3)return startReview(passed)}}
+  openMap(focus)}
+let RV=null;
+function startReview(passed){
+  const pri=u=>(TD.wrongBefore.includes(u.key)?40:0)+(TD.recent.includes(u.key)?30:0)+((3-(MEM[u.key]||3))*12)+Math.random()*20;
+  const pick=passed.slice().sort((a,b)=>pri(b)-pri(a)).slice(0,6);
+  RV={items:shuffle(pick).map(u=>{const v=unitVerse(u),ks=keysOf(v).filter(k=>tok(k.t).length>=2),all=keysOf(v);
+      const pool=ks.length?ks:all;const n=tok(v.zh).length>40&&pool.length>=4?2:1;
+      return {u,v,blanks:shuffle(pool).slice(0,n).sort((a,b)=>a.s-b.s)}}).filter(x=>x.blanks.length),i:0,wrong:[],lock:false};
+  if(!RV.items.length){TD.reviewDone=true;tdSave();return openMap()}
+  show("review");rvDraw()}
+function rvDraw(show){const it=RV.items[RV.i],ch=tok(it.v.zh);let html="",i=0;const at=new Map(it.blanks.map(k=>[k.s,k]));
+  while(i<ch.length){const k=at.get(i);if(k){html+=show?`<span class="${show==="ok"?"gold":"filled-err"}">${esc(k.t)}</span>`:`<span class="slot cur" style="min-width:${tok(k.t).length*1.05+.4}em"></span>`;i=k.e}else{html+=esc(ch[i]);i++}}
+  $("#rvVerse").innerHTML=html;$("#rvRef").textContent=it.u.v.full+(it.u.sub?" · "+it.u.sub:"");
+  $("#rvCount").textContent=`${RV.i+1} / ${RV.items.length}`;
+  if(!show){$("#rvIn").value="";$("#rvIn").disabled=false;$("#rvGo").disabled=false;$("#rvFb").textContent="";$("#rvFb").className="feedback";
+    $("#rvIn").placeholder=it.blanks.length>1?`按顺序打出 ${it.blanks.length} 个空`:"打出空格里的词";try{$("#rvIn").focus({preventScroll:true})}catch(e){}}}
+$("#rvForm").onsubmit=e=>{e.preventDefault();if(!RV||RV.lock)return;const it=RV.items[RV.i];
+  const got=tok($("#rvIn").value).filter(c=>HAN.test(c)).join(""),want=it.blanks.map(k=>tok(k.t).filter(c=>HAN.test(c)).join("")).join("");
+  if(!got)return;RV.lock=true;$("#rvIn").disabled=true;$("#rvGo").disabled=true;const ok=got===want;
+  if(ok){sfx.ok(RV.i+1);rvDraw("ok");$("#rvFb").className="feedback ok";$("#rvFb").textContent="答对了！";burstEl($("#rvVerse"),20)}
+  else{sfx.bad();RV.wrong.push(it.u.key);rvDraw("bad");$("#rvFb").className="feedback no";$("#rvFb").textContent=`正确的是“${it.blanks.map(k=>k.t).join("……")}”。这一关等一下要温习。`}
+  setTimeout(()=>{RV.lock=false;RV.i++;if(RV.i<RV.items.length)rvDraw();else rvEnd()},ok?900:2200)};
+function rvEnd(){const w=uniq(RV.wrong),n=RV.items.length;TD.reviewDone=true;TD.pending=uniq([...TD.pending,...w]);TD.wrongBefore=uniq([...TD.wrongBefore,...w]);tdSave();
+  if(ACC.tok)rpc("student_save_review",{p_token:ACC.tok,p_pack:packTitle(PACK),p_asked:n,p_wrong:w}).catch(()=>{});
+  $("#resBox").innerHTML=`<h2>${w.length?"摸底完成":"全对！"}</h2>
+    <div class="stats"><div><b>${n-w.length}/${n}</b><span>答对</span></div><div><b>${w.length}</b><span>要温习</span></div></div>
+    <p class="hint">${w.length?`地图上红色的 ${w.length} 关是“待温习”。先把它们重新过一遍，才能开新关卡。`:"复习得很扎实，直接开新关卡吧！"}</p>
+    <div class="row center"><button class="btn" id="rvMap">${w.length?"去温习":"开始闯关"}</button></div>`;
+  show("result");if(!w.length){sfx.win();burst(innerWidth/2,innerHeight*.3,70)}
+  $("#rvMap").onclick=()=>{const i=UNITS.findIndex(u=>TD.pending.includes(u.key));openMap(i>=0?i:undefined)}}
 
 /* ===== 测试 ===== */
 let T=null;const QT=8;
@@ -1691,7 +1808,7 @@ function accSave(){store.set("xb-tok",ACC.tok);store.set("xb-name",ACC.name);sto
 function drawAcc(){const b=$("#accBtn");b.textContent=ACC.tok?`${ACC.name} · 退出`:"登录";b.classList.toggle("on",!!ACC.tok);
   const nb=document.querySelector(".nameBox");if(nb)nb.hidden=!!ACC.tok;if(typeof vGate==="function")vGate()}
 function showLogin(msg){$("#accBox").hidden=false;if(typeof setAccMode==="function")setAccMode("in");$("#accMsg").textContent=msg||"";setTimeout(()=>{try{$("#accUser").focus({preventScroll:true})}catch(e){}},60)}
-function resetLocal(){MEM={};ADV={};TBEST=0;LOCALB=[];Q={p:{},t:[],l:[],sec:0};store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",0);store.set("xb4-local",[]);saveQ()}
+function resetLocal(){TD=freshToday();tdSave();MEM={};ADV={};TBEST=0;LOCALB=[];Q={p:{},t:[],l:[],sec:0};store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",0);store.set("xb4-local",[]);saveQ()}
 function sessionGone(){ACC.tok=null;accSave();drawAcc();showLogin("登录已过期，请重新登录。")}
 async function flushQ(){if(!ACC.tok||flushQ.busy)return;flushQ.busy=true;
   try{const items=Object.entries(Q.p).map(([k,v])=>({k,s:v[0],a:v[1]}));
@@ -1709,7 +1826,7 @@ async function accSync(){if(!ACC.tok)return;
     for(const k in MEM){if(MEM[k]>((sp[k]||[0])[0]||0)||(ADV[k]||0)>((sp[k]||[0,0])[1]||0))Q.p[k]=[MEM[k]||0,ADV[k]||0]}
     for(const k in ADV){if(!MEM[k]&&ADV[k]>((sp[k]||[0,0])[1]||0))Q.p[k]=[0,ADV[k]]}
     TBEST=Math.max(TBEST,d.best||0);store.set("xb4-mem",MEM);store.set("xb-adv",ADV);store.set("xb4-tbest",TBEST);saveQ();
-    drawAcc();if(!$("#home").hidden)renderHome();flushQ()}
+    drawAcc();if(!$("#home").hidden)renderHome();flushQ();tdSync()}
   catch(e){if(e.code==="SESSION_EXPIRED")sessionGone()}}
 let accMode="in";
 function setAccMode(m){accMode=m;const up=m==="up";
@@ -1989,7 +2106,7 @@ function vFinish(){const stars=V.miss<=2?3:V.miss<=5?2:1;
   $("#vBackL").onclick=()=>vHome();const nx=$("#vNextL");if(nx)nx.onclick=()=>vStart(V.i+1)}
 document.querySelectorAll("#vTabs button").forEach(b=>b.onclick=()=>{VSTATE.p=b.dataset.p;store.set("xb-vpack",VSTATE.p);vHome()});
 $("#vBack").onclick=()=>{show("home");renderHome()};
-$("#goVocab").onclick=()=>vHome();
+$("#goVocab").onclick=()=>{if(hwBlock("all"))return;vHome()};
 vGate();
 </script>
 

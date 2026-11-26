@@ -159,7 +159,7 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
     <div class="wrap">
       <div class="card classbar noprint">
         <label for="classSel" style="flex-direction:row;align-items:center;gap:8px">班级<select id="classSel"></select></label>
-        <form id="hwForm" class="row" style="flex-wrap:nowrap;gap:6px" title="学生的测验榜会默认显示这个经文包，并标上“作业”；其他经文包的榜算自由练习。"><label for="hwPack" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap">测验作业<input id="hwPack" list="hwList" placeholder="未设置" maxlength="40" style="width:130px"></label><button class="btn small" type="submit">保存</button><span class="hint" id="hwMsg"></span></form>
+        <form id="hwForm" class="row" style="flex-wrap:nowrap;gap:6px" title="作业经文包：学生的测验榜默认显示它；每天关数大于 0 时，学生要先过完今天的新关卡，才能玩其他经文包、对战和词汇。"><label for="hwPack" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap">作业经文包<input id="hwPack" list="hwList" placeholder="未设置" maxlength="40" style="width:130px"></label><label for="hwDaily" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap" title="每天要完成的新关卡数。完成前，学生不能玩其他经文包、对战和词汇。填 0 表示不限制。">每天<input id="hwDaily" type="number" min="0" max="50" inputmode="numeric" style="width:56px;text-align:center" placeholder="0">关</label><button class="btn small" type="submit">保存</button><span class="hint" id="hwMsg"></span></form>
         <datalist id="hwList"><option value="创世记"><option value="出埃及记"><option value="利未记"><option value="民数记"><option value="申命记"><option value="约书亚记"><option value="士师记"><option value="撒母耳记上"><option value="撒母耳记下"><option value="列王纪上"><option value="列王纪下"><option value="诗篇"><option value="箴言"><option value="传道书"><option value="雅歌"><option value="以赛亚书"><option value="耶利米书"><option value="耶利米哀歌"><option value="以西结书"><option value="但以理书"><option value="何西阿书"><option value="约珥书"><option value="阿摩司书"><option value="约拿书"><option value="弥迦书"><option value="西番雅书"><option value="撒迦利亚书"><option value="玛拉基书"><option value="马太福音"><option value="马可福音"><option value="路加福音"><option value="约翰福音"><option value="使徒行传"><option value="罗马书"><option value="哥林多前书"><option value="哥林多后书"><option value="加拉太书"><option value="以弗所书"><option value="腓立比书"><option value="歌罗西书"><option value="帖撒罗尼迦前书"><option value="帖撒罗尼迦后书"><option value="提摩太前书"><option value="提摩太后书"><option value="提多书"><option value="希伯来书"><option value="雅各书"><option value="彼得前书"><option value="彼得后书"><option value="约翰一书"><option value="犹大书"><option value="启示录"></datalist>
         <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vHw" aria-pressed="true">作业检查</button><button id="vStats" aria-pressed="false">学习情况</button><button id="vWrite" aria-pressed="false">造句</button><button id="vAcct" aria-pressed="false">学生账号与密码</button></div>
         <span style="flex:1"></span>
@@ -273,12 +273,14 @@ async function loadClasses(keep){const {data,error}=await SB.rpc("teacher_classe
   if(!CLASSES.length){CID=null;$("#statsView").hidden=$("#acctView").hidden=true;return}
   const saved=+localStorage.getItem("xb-teacher-class")||0;CID=keep||(CLASSES.some(c=>c.id===saved)?saved:CLASSES[0].id);sel.value=CID;loadHw();showView()}
 let HW={};
-async function loadHw(){const {data}=await SB.rpc("teacher_homework");HW={};(data||[]).forEach(r=>HW[r.id]=r.hw_pack||"");$("#hwPack").value=HW[CID]||"";$("#hwMsg").textContent=""}
-$("#hwForm").onsubmit=async e=>{e.preventDefault();const v=$("#hwPack").value.trim();
-  const {error}=await SB.rpc("teacher_set_homework",{p_class:CID,p_pack:v});
+function drawHwForm(){const h=HW[CID]||{};$("#hwPack").value=h.pack||"";$("#hwDaily").value=h.daily||"";$("#hwMsg").textContent=""}
+async function loadHw(){const {data}=await SB.rpc("teacher_homework_v2");HW={};(data||[]).forEach(r=>HW[r.id]={pack:r.hw_pack||"",daily:r.hw_daily||0});drawHwForm()}
+$("#hwForm").onsubmit=async e=>{e.preventDefault();const v=$("#hwPack").value.trim(),d=Math.min(50,Math.max(0,Math.round(+$("#hwDaily").value||0)));
+  if(d>0&&!v){$("#hwMsg").textContent="先填作业经文包";return}
+  const {error}=await SB.rpc("teacher_set_homework",{p_class:CID,p_pack:v,p_daily:d});
   if(error){$("#hwMsg").textContent=errText(error);return}
-  HW[CID]=v;$("#hwMsg").textContent=v?"已保存":"已取消作业"};
-$("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-teacher-class",CID);$("#hwPack").value=HW[CID]||"";$("#hwMsg").textContent="";$("#detail").hidden=true;$("#addMsg").textContent="";showView()};
+  HW[CID]={pack:v,daily:d};$("#hwDaily").value=d||"";$("#hwMsg").textContent=!v?"已取消作业":d?`已保存：每天 ${d} 关`:"已保存（不限每天关数）";if(VIEW==="hw")loadDay()};
+$("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-teacher-class",CID);drawHwForm();$("#detail").hidden=true;$("#addMsg").textContent="";showView()};
 $("#newClass").onsubmit=async e=>{e.preventDefault();const n=$("#newClassName").value.trim();if(!n)return;
   const {data,error}=await SB.rpc("teacher_create_class",{p_name:n});if(error){$("#appMsg").textContent=errText(error);return}
   $("#newClassName").value="";localStorage.setItem("xb-teacher-class",data.id);await loadClasses(data.id);setView("acct")};
@@ -320,8 +322,12 @@ $("#goalMin").onchange=()=>{GOAL=Math.min(180,Math.max(1,Math.round(+$("#goalMin
 $("#dPick").onchange=()=>{if($("#dPick").value){DAY=$("#dPick").value;loadDay()}};
 $("#dPrev").onclick=()=>{DAY=shiftDay(DAY,-1);loadDay()};$("#dNext").onclick=()=>{DAY=shiftDay(DAY,1);loadDay()};$("#dToday").onclick=()=>{DAY=ymd(new Date());loadDay()};
 async function loadDay(){const today=ymd(new Date());if(DAY>today)DAY=today;$("#dPick").value=DAY;$("#dPick").max=today;$("#dNext").disabled=DAY>=today;
-  const want=DAY,cid=CID;const {data,error}=await SB.rpc("teacher_day",{p_class:CID,p_day:DAY});if(want!==DAY||cid!==CID)return;
-  if(error){$("#appMsg").textContent=errText(error);return}DAYROWS=data||[];drawDay()}
+  const want=DAY,cid=CID;const [{data,error},hw]=await Promise.all([SB.rpc("teacher_day",{p_class:CID,p_day:DAY}),SB.rpc("teacher_hw_day",{p_class:CID,p_day:DAY})]);if(want!==DAY||cid!==CID)return;
+  if(error){$("#appMsg").textContent=errText(error);return}const H=new Map((hw.data||[]).map(x=>[x.id,x]));DAYROWS=(data||[]).map(r=>({...r,hw:H.get(r.id)||{}}));drawDay()}
+function lvCell(r){const h=r.hw||{},daily=(HW[CID]||{}).daily||0;if(h.target==null&&!daily)return '<span class="hint">—</span>';
+  const n=h.new||0,t=h.target!=null?h.target:daily;return `<span class="pill ${t&&n>=t?"on":n?"mid":"none"}">${n} / ${t}</span>`}
+function rvCell(r){const h=r.hw||{};const p=h.pending?`<span class="pill mid" title="还没补完的待温习关卡">待温习 ${h.pending}</span>`:"";
+  if(h.asked==null)return (p||'<span class="hint">—</span>');return `<span class="tsc" title="摸底题数 ${h.asked}，答错 ${h.wrong}">对 ${h.asked-h.wrong}/${h.asked}</span> ${p}`}
 function hwState(r){const m=r.sec/60;if(!r.sec&&!r.plays.length&&!r.tests.length)return 0;return m>=GOAL?2:1}
 function vlabel(k){const ab=bookOf(k),rest=k.slice(ab.length+1);return ab+(/^[\u4e00-\u9fff]/.test(ab)?"":" ")+rest.replace(/#(\d+)/,(m,n)=>"·"+(+n+1))}
 function verseChips(plays){if(!plays.length)return '<span class="hint">—</span>';
@@ -341,10 +347,12 @@ function drawDay(){const t=$("#hwTbl"),sum=$("#hwSum");
     (by[1].length?`<div class="names" style="flex-basis:100%">不够：${nm(by[1])}</div>`:"")+(by[0].length?`<div class="names" style="flex-basis:100%">没练：${nm(by[0])}</div>`:"");
   const cm=$("#copyMiss");if(cm)cm.onclick=()=>{const txt=`${clsName()} ${dayLabel(DAY).split(" · ")[0]}经文闯关作业（每天至少 ${GOAL} 分钟）\n`+(by[1].length?"还差一点："+by[1].map(r=>r.name+"（练了 "+Math.round(r.sec/60)+" 分钟）").join("、")+"\n":"")+(by[0].length?"还没练："+by[0].map(r=>r.name).join("、"):"");
     navigator.clipboard.writeText(txt.trim()).then(()=>{cm.textContent="已复制";setTimeout(()=>cm.textContent="复制未完成名单",1500)},()=>prompt("复制下面的文字",txt))};
-  t.innerHTML=`<thead><tr><th>学生</th><th>作业</th><th>练习时长</th><th>练习时间段</th><th>过关</th><th>练了哪些经文</th><th>测验得分</th></tr></thead><tbody>`+
+  t.innerHTML=`<thead><tr><th>学生</th><th>作业</th><th title="今天在作业经文包里新过的关卡 / 当天要求">新关卡</th><th title="当天的温习摸底成绩；待温习＝还没补完的错题关卡">摸底</th><th>练习时长</th><th>练习时间段</th><th>过关</th><th>练了哪些经文</th><th>测验得分</th></tr></thead><tbody>`+
     DAYROWS.map(r=>`<tr data-id="${r.id}">
       <td class="who"><b>${esc(r.name)}</b><small>${esc(r.username)}</small></td>
       <td>${statePill(r)}</td>
+      <td>${lvCell(r)}</td>
+      <td>${rvCell(r)}</td>
       <td>${timeBar(r.sec)}</td>
       <td>${r.first?hm(r.first)+"–"+hm(r.last):'<span class="hint">—</span>'}</td>
       <td>${r.plays.length?r.plays.length+" 遍":'<span class="hint">—</span>'}</td>
