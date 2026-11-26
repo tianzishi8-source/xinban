@@ -939,7 +939,7 @@ body.dshake main{animation:dshake .28s}
       <div class="lbkinds" id="bKinds"><button data-k="stars" aria-pressed="true"><b>★</b>星星榜</button><button data-k="test" aria-pressed="false"><b>⚡</b>测验榜</button><button data-k="time" aria-pressed="false"><b>⏱</b>勤练榜</button></div>
       <div class="row" style="justify-content:space-between">
         <div class="tabsw" id="bScope"><button data-v="all" aria-pressed="true">全部同学</button><button data-v="class" aria-pressed="false">我的班</button></div>
-        <div class="tabsw" id="bPeriod"><button data-v="day" aria-pressed="true">今日</button><button data-v="week" aria-pressed="false">本周</button><button data-v="all" aria-pressed="false">总榜</button></div>
+        <div class="tabsw" id="bPeriod"><button data-v="all" aria-pressed="true">总榜</button><button data-v="week" aria-pressed="false">本周</button><button data-v="day" aria-pressed="false">今日</button></div>
       </div>
       <div class="lbpacks" id="bPacks" hidden></div>
       <p class="hint" id="boardHint"></p>
@@ -1756,7 +1756,7 @@ let pushing=false;
 async function pushClass(){if(!DB||!myId||pushing)return;pushing=true;
   try{await DB.doc("scores/"+myId).set({tag:nick(),total:TBEST,engraved:memCount(),updatedAt:Date.now()})}catch(e){}pushing=false;pushProgress()}
 /* ===== 心版榜：所有登录的同学互相看得到 ===== */
-const LB={kind:"stars",scope:"all",period:"day",seq:0,pack:null,packs:null};
+const LB={kind:"stars",scope:"all",period:"all",seq:0,pack:null,packs:null};
 const LBK={stars:{unit:"颗星",hint:"闯关拿到的星星（普通训练＋高阶训练）。今日、本周按这段时间里过关拿到的星星算，同一关只算最高的一次。"},
   test:{unit:"分",hint:"60 秒测试的最高分，每个经文包分开排（书卷长短不同，难度也不同）。"},time:{unit:"分钟",hint:"练习时长：页面开着并且在做题才计时。"}};
 function lbPress(box,v){box.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.k||b.dataset.v)===v))}
