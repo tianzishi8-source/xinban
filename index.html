@@ -240,6 +240,7 @@ body.hurry #qcard{box-shadow:0 0 0 3px rgba(255,106,77,.55),0 6px 22px rgba(30,1
 .lbkinds button b{font-size:22px;line-height:1}
 .lbkinds button[aria-pressed="true"]{color:#fff;background:linear-gradient(180deg,#ffb35c,#ef6a2e);border-color:transparent;box-shadow:0 4px 0 #b9441d,0 10px 18px -8px rgba(239,90,46,.6)}
 .lbme{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:18px;background:linear-gradient(90deg,#fff1c9,#fff8ea);border:1px solid #f3d58c;font-weight:700;color:#7a4a10}
+.lbme>span:first-child{white-space:nowrap}
 .lbme .big{font-family:var(--f-head);font-weight:900;font-size:30px;color:#e0702e;line-height:1}
 .lbme .gap{margin-left:auto;font-size:13px;color:#9a7a4a;text-align:right}
 .podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;margin-top:6px}
@@ -260,6 +261,8 @@ body.hurry #qcard{box-shadow:0 0 0 3px rgba(255,106,77,.55),0 6px 22px rgba(30,1
 .lbpacks{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
 .lbpacks button{flex:0 0 auto;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#7a5a2a;background:#fff;border:1px solid var(--hair);box-shadow:var(--soft);white-space:nowrap}
 .lbpacks button small{font-weight:500;color:var(--muted);margin-left:4px}
+.lbpacks button em{font-style:normal;font-size:11px;font-weight:900;color:#fff;background:#e2552f;border-radius:6px;padding:0 5px;margin-right:5px}
+.lbpacks button.hw{border:1.5px solid #f0a35c}
 .lbpacks button.mine::after{content:"·我考过";font-size:11px;color:#e0702e;margin-left:4px;font-weight:700}
 .lbpacks button[aria-pressed="true"]{color:#fff;background:linear-gradient(180deg,#ff9b5a,#ea6a2c);border-color:transparent}
 .lbpacks button[aria-pressed="true"] small,.lbpacks button[aria-pressed="true"].mine::after{color:#ffe7d6}
@@ -1639,14 +1642,15 @@ async function renderBoard(){
   const my=++LB.seq;list.innerHTML=`<p class="hint" style="text-align:center;padding:16px">正在载入……</p>`;pod.innerHTML="";me.innerHTML="";
   await flushQ();
   if(LB.kind==="test"){
-    try{LB.packs=await rpc("leaderboard_packs",{p_token:ACC.tok})}catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}LB.packs=LB.packs||[]}
-    if(my!==LB.seq)return;const P=LB.packs||[];
-    if(!LB.pack||!P.some(x=>x.pack===LB.pack)){const cur=packTitle(PACK);LB.pack=(P.find(x=>x.pack===cur)||P.find(x=>x.mine)||P[0]||{}).pack||null}
-    pk.innerHTML=P.map(x=>`<button type="button" data-p="${esc(x.pack)}" class="${x.mine?"mine":""}" aria-pressed="${x.pack===LB.pack}">${esc(x.pack)}<small>${x.players}人</small></button>`).join("");
+    try{const R=await rpc("leaderboard_packs",{p_token:ACC.tok});LB.packs=R.packs||[];LB.hw=R.hw||null}catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}LB.packs=LB.packs||[]}
+    if(my!==LB.seq)return;const P=(LB.packs||[]).slice();
+    if(LB.hw&&!P.some(x=>x.pack===LB.hw))P.unshift({pack:LB.hw,players:0,mine:false});
+    if(!LB.pack||!P.some(x=>x.pack===LB.pack)){const cur=packTitle(PACK);LB.pack=LB.hw||(P.find(x=>x.pack===cur)||P.find(x=>x.mine)||P[0]||{}).pack||null}
+    pk.innerHTML=P.map(x=>`<button type="button" data-p="${esc(x.pack)}" class="${x.mine?"mine":""}${x.pack===LB.hw?" hw":""}" aria-pressed="${x.pack===LB.pack}">${x.pack===LB.hw?'<em>作业</em>':""}${esc(x.pack)}<small>${x.players}人</small></button>`).join("");
     pk.querySelectorAll("button").forEach(b=>b.onclick=()=>{LB.pack=b.dataset.p;renderBoard()});
     const on=pk.querySelector('[aria-pressed="true"]');if(on)on.scrollIntoView({block:"nearest",inline:"center"});
     if(!LB.pack){list.innerHTML=`<div class="lbempty"><p class="hint">还没有人考过 60 秒测试。第一名就是你！</p></div>`;return}
-    $("#boardHint").textContent=`“${LB.pack}”的 60 秒测试最高分。每个经文包分开排，换个包看上面的按钮。`+(per==="week"?"本周从周一算起。":"")}
+    $("#boardHint").textContent=(LB.pack===LB.hw?`这是老师布置的作业：“${LB.pack}”的 60 秒测试最高分。`:LB.hw?`“${LB.pack}”是自由练习榜，不算作业（作业是“${LB.hw}”）。`:`“${LB.pack}”的 60 秒测试最高分。`)+"每个经文包分开排。"+(per==="week"?"本周从周一算起。":"")}
   let d;try{d=await rpc("leaderboard",{p_token:ACC.tok,p_kind:LB.kind,p_period:per,p_scope:LB.scope,p_pack:LB.kind==="test"?LB.pack:null})}
   catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}list.innerHTML=`<p class="msg err" style="text-align:center">连不上网络，请稍后点“刷新”。</p>`;return}
   if(my!==LB.seq)return;

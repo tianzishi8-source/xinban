@@ -35,22 +35,54 @@ begin
   return res;
 end $$;
 
+-- 作业经文包：老师给每个班指定一个（classes.hw_pack），测验榜默认显示它并标“作业”
+alter table public.classes add column if not exists hw_pack text check (hw_pack is null or char_length(hw_pack) <= 40);
+
 create or replace function public.leaderboard_packs(p_token text)
 returns json
 language plpgsql stable security definer set search_path = '' as $$
-declare sid bigint := private.student_of(p_token);
+declare sid bigint := private.student_of(p_token); hw text;
 begin
-  return coalesce((
-    select json_agg(json_build_object('pack', pack, 'players', players, 'mine', mine) order by players desc, pack)
+  select c.hw_pack into hw from public.students s join public.classes c on c.id = s.class_id where s.id = sid;
+  return json_build_object('hw', hw, 'packs', coalesce((
+    select json_agg(json_build_object('pack', pack, 'players', players, 'mine', mine) order by (pack = hw) desc, players desc, pack)
     from (
       select t.pack, count(distinct t.student_id) as players, bool_or(t.student_id = sid) as mine
       from public.tests t join public.students s on s.id = t.student_id join public.classes c on c.id = s.class_id
       where t.pack is not null and (not c.hide_rank or s.id = sid)
       group by t.pack
-    ) x), '[]'::json);
+    ) x), '[]'::json));
+end $$;
+
+create or replace function public.teacher_homework()
+returns table(id bigint, hw_pack text)
+language sql stable security definer set search_path = '' as $$
+  select c.id, c.hw_pack from public.classes c where c.teacher_id = private.me()
+$$;
+
+create or replace function public.teacher_set_homework(p_class bigint, p_pack text) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not private.owns_class(p_class) then raise exception 'NOT_YOUR_CLASS'; end if;
+  update public.classes set hw_pack = nullif(left(trim(p_pack), 40), '') where id = p_class;
+end $$;
+
+-- 拦截不可能的测试成绩：每答对一题最多 100×4 倍＋快答 50 = 450 分；一局最多答对 80 题。超出的成绩不记录。
+create or replace function public.student_save_test(p_token text, p_score int, p_correct int, p_wrong int, p_combo int, p_pack text)
+returns void
+language plpgsql security definer set search_path = '' as $$
+declare sid bigint := private.student_of(p_token);
+begin
+  if p_score < 0 or p_correct < 0 or p_correct > 80 or p_score > p_correct * 450 or p_combo > p_correct then return; end if;
+  insert into public.tests (student_id, score, correct, wrong, best_combo, pack)
+  values (sid, p_score, p_correct, least(greatest(p_wrong, 0), 999), least(greatest(p_combo, 0), 999), left(p_pack, 40));
 end $$;
 
 revoke all on function public.leaderboard(text, text, text, text, text) from public;
 grant execute on function public.leaderboard(text, text, text, text, text) to anon, authenticated;
 revoke all on function public.leaderboard_packs(text) from public;
 grant execute on function public.leaderboard_packs(text) to anon, authenticated;
+revoke all on function public.teacher_homework() from public;
+grant execute on function public.teacher_homework() to anon, authenticated;
+revoke all on function public.teacher_set_homework(bigint, text) from public;
+grant execute on function public.teacher_set_homework(bigint, text) to anon, authenticated;

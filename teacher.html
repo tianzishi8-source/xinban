@@ -159,6 +159,8 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
     <div class="wrap">
       <div class="card classbar noprint">
         <label for="classSel" style="flex-direction:row;align-items:center;gap:8px">班级<select id="classSel"></select></label>
+        <form id="hwForm" class="row" style="flex-wrap:nowrap;gap:6px" title="学生的测验榜会默认显示这个经文包，并标上“作业”；其他经文包的榜算自由练习。"><label for="hwPack" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap">测验作业<input id="hwPack" list="hwList" placeholder="未设置" maxlength="40" style="width:130px"></label><button class="btn small" type="submit">保存</button><span class="hint" id="hwMsg"></span></form>
+        <datalist id="hwList"><option value="创世记"><option value="出埃及记"><option value="利未记"><option value="民数记"><option value="申命记"><option value="约书亚记"><option value="士师记"><option value="撒母耳记上"><option value="撒母耳记下"><option value="列王纪上"><option value="列王纪下"><option value="诗篇"><option value="箴言"><option value="传道书"><option value="雅歌"><option value="以赛亚书"><option value="耶利米书"><option value="耶利米哀歌"><option value="以西结书"><option value="但以理书"><option value="何西阿书"><option value="约珥书"><option value="阿摩司书"><option value="约拿书"><option value="弥迦书"><option value="西番雅书"><option value="撒迦利亚书"><option value="玛拉基书"><option value="马太福音"><option value="马可福音"><option value="路加福音"><option value="约翰福音"><option value="使徒行传"><option value="罗马书"><option value="哥林多前书"><option value="哥林多后书"><option value="加拉太书"><option value="以弗所书"><option value="腓立比书"><option value="歌罗西书"><option value="帖撒罗尼迦前书"><option value="帖撒罗尼迦后书"><option value="提摩太前书"><option value="提摩太后书"><option value="提多书"><option value="希伯来书"><option value="雅各书"><option value="彼得前书"><option value="彼得后书"><option value="约翰一书"><option value="犹大书"><option value="启示录"></datalist>
         <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vHw" aria-pressed="true">作业检查</button><button id="vStats" aria-pressed="false">学习情况</button><button id="vWrite" aria-pressed="false">造句</button><button id="vAcct" aria-pressed="false">学生账号与密码</button></div>
         <span style="flex:1"></span>
         <form id="newClass" class="row" style="flex-wrap:nowrap"><input id="newClassName" placeholder="新班级名称，例如 初二一班" maxlength="40" style="width:200px"><button class="btn small" type="submit">新建班级</button></form>
@@ -269,8 +271,14 @@ async function loadClasses(keep){const {data,error}=await SB.rpc("teacher_classe
   $("#noClass").hidden=CLASSES.length>0;
   if(KEY&&!CLASSES.length){$("#appMsg").textContent="这个链接打不开数据，可能复制时缺了几个字符。请重新打开完整的链接。"}
   if(!CLASSES.length){CID=null;$("#statsView").hidden=$("#acctView").hidden=true;return}
-  const saved=+localStorage.getItem("xb-teacher-class")||0;CID=keep||(CLASSES.some(c=>c.id===saved)?saved:CLASSES[0].id);sel.value=CID;showView()}
-$("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-teacher-class",CID);$("#detail").hidden=true;$("#addMsg").textContent="";showView()};
+  const saved=+localStorage.getItem("xb-teacher-class")||0;CID=keep||(CLASSES.some(c=>c.id===saved)?saved:CLASSES[0].id);sel.value=CID;loadHw();showView()}
+let HW={};
+async function loadHw(){const {data}=await SB.rpc("teacher_homework");HW={};(data||[]).forEach(r=>HW[r.id]=r.hw_pack||"");$("#hwPack").value=HW[CID]||"";$("#hwMsg").textContent=""}
+$("#hwForm").onsubmit=async e=>{e.preventDefault();const v=$("#hwPack").value.trim();
+  const {error}=await SB.rpc("teacher_set_homework",{p_class:CID,p_pack:v});
+  if(error){$("#hwMsg").textContent=errText(error);return}
+  HW[CID]=v;$("#hwMsg").textContent=v?"已保存":"已取消作业"};
+$("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-teacher-class",CID);$("#hwPack").value=HW[CID]||"";$("#hwMsg").textContent="";$("#detail").hidden=true;$("#addMsg").textContent="";showView()};
 $("#newClass").onsubmit=async e=>{e.preventDefault();const n=$("#newClassName").value.trim();if(!n)return;
   const {data,error}=await SB.rpc("teacher_create_class",{p_name:n});if(error){$("#appMsg").textContent=errText(error);return}
   $("#newClassName").value="";localStorage.setItem("xb-teacher-class",data.id);await loadClasses(data.id);setView("acct")};
