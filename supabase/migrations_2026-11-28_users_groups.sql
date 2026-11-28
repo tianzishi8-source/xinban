@@ -471,7 +471,322 @@ language sql stable security definer set search_path = '' as $$
   from (select public.user_today(p_token) t) x
 $$;
 
--- @@LEADER_FUNCTIONS@@
+-- ========== 8. 带领者与主账号函数（leader.html 调用） ==========
+-- 身份：p_token（和游戏同一个登录），或请求头 x-leader-key。错误码：NOT_LEADER NOT_ADMIN FORBIDDEN BAD_INPUT
+
+create or replace function private.leader_of(p_token text) returns bigint
+language plpgsql stable security definer set search_path = '' as $$
+declare uid bigint; ok boolean;
+begin
+  if coalesce(p_token, '') = '' then
+    select k.user_id into uid from private.leader_keys k
+    where k.key_hash = extensions.digest(nullif(nullif(current_setting('request.headers', true), '')::json ->> 'x-leader-key', ''), 'sha256');
+    if uid is null then raise exception 'SESSION_EXPIRED'; end if;
+  else
+    uid := private.user_of(p_token);
+  end if;
+  select is_leader or is_admin into ok from public.users where id = uid;
+  if not ok then raise exception 'NOT_LEADER'; end if;
+  return uid;
+end $$;
+
+create or replace function private.admin_of(p_token text) returns bigint
+language plpgsql stable security definer set search_path = '' as $$
+declare uid bigint := private.user_of(p_token);
+begin
+  if not (select is_admin from public.users where id = uid) then raise exception 'NOT_ADMIN'; end if;
+  return uid;
+end $$;
+
+-- 能管这个小组：主账号，或这个小组的带领者
+create or replace function private.check_group(p_uid bigint, p_group bigint) returns void
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from public.groups g where g.id = p_group
+                 and (g.leader_id = p_uid or (select is_admin from public.users where id = p_uid))) then
+    raise exception 'FORBIDDEN';
+  end if;
+end $$;
+
+-- 能看这个人：主账号，或此人在我带的小组里
+create or replace function private.can_view(p_uid bigint, p_target bigint) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select (select is_admin from public.users where id = p_uid)
+      or exists (select 1 from public.group_members m join public.groups g on g.id = m.group_id
+                 where m.user_id = p_target and g.leader_id = p_uid)
+$$;
+
+-- 能管这个人的账号：主账号能管所有人；带领者只能管自己组里的普通组员
+create or replace function private.check_manage(p_uid bigint, p_target bigint) returns void
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if (select is_admin from public.users where id = p_uid) then return; end if;
+  if not private.can_view(p_uid, p_target)
+     or (select is_leader or is_admin from public.users where id = p_target) then raise exception 'FORBIDDEN'; end if;
+end $$;
+
+create or replace function public.leader_me(p_token text) returns json
+language sql stable security definer set search_path = '' as $$ select private.me_json(private.leader_of(p_token)) $$;
+
+create or replace function public.leader_groups(p_token text)
+returns table (id bigint, name text, prefix text, invite_code text, hw_pack text, hw_daily smallint,
+               members int, leader_id bigint, leader_name text, created_at timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+declare uid bigint := private.leader_of(p_token); adm boolean := (select u.is_admin from public.users u where u.id = uid);
+begin
+  return query select g.id, g.name, g.prefix, g.invite_code, g.hw_pack, g.hw_daily,
+    (select count(*)::int from public.group_members m where m.group_id = g.id), g.leader_id, l.name, g.created_at
+  from public.groups g left join public.users l on l.id = g.leader_id
+  where adm or g.leader_id = uid order by g.name;
+end $$;
+
+create or replace function public.leader_create_group(p_token text, p_name text) returns json
+language plpgsql security definer set search_path = '' as $$
+declare uid bigint := private.leader_of(p_token); pre text; g public.groups; letters text := 'abcdefghjkmnpqrstuvwxyz';
+begin
+  if coalesce(trim(p_name), '') = '' or char_length(trim(p_name)) > 40 then raise exception 'BAD_INPUT'; end if;
+  loop
+    pre := substr(letters, 1 + floor(random() * 23)::int, 1) || substr(letters, 1 + floor(random() * 23)::int, 1);
+    exit when not exists (select 1 from public.groups where prefix = pre);
+  end loop;
+  insert into public.groups (name, prefix, leader_id, invite_code) values (trim(p_name), pre, uid, private.new_invite_code()) returning * into g;
+  return row_to_json(g);
+end $$;
+
+create or replace function public.leader_regen_code(p_token text, p_group bigint) returns text
+language plpgsql security definer set search_path = '' as $$
+declare c text := private.new_invite_code();
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  update public.groups set invite_code = c where id = p_group;
+  return c;
+end $$;
+
+create or replace function public.leader_set_homework(p_token text, p_group bigint, p_pack text, p_daily int) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  update public.groups set hw_pack = nullif(left(trim(p_pack), 40), ''), hw_daily = least(greatest(coalesce(p_daily, 0), 0), 50) where id = p_group;
+end $$;
+
+create or replace function public.leader_overview(p_token text, p_group bigint)
+returns table (id bigint, name text, username text, today_sec int, week_sec int, total_sec int,
+               passed int, stars int, adv int, tests int, best_score int, last_score int, last_seen timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  return query
+  select s.id, s.name, s.username,
+    coalesce((select u.seconds from public.usage_daily u where u.user_id = s.id and u.day = private.today()), 0),
+    coalesce((select sum(u.seconds)::int from public.usage_daily u where u.user_id = s.id and u.day > private.today() - 7), 0),
+    coalesce((select sum(u.seconds)::int from public.usage_daily u where u.user_id = s.id), 0),
+    (select count(*)::int from public.progress p where p.user_id = s.id and p.stars > 0
+       and (p.unit_key like '%#%' or not exists (select 1 from public.progress q where q.user_id = s.id and q.unit_key like p.unit_key || '#%'))),
+    coalesce((select sum(p.stars)::int from public.progress p where p.user_id = s.id and p.unit_key not like '%#%'), 0),
+    (select count(*)::int from public.progress p where p.user_id = s.id and p.adv > 0),
+    (select count(*)::int from public.tests t where t.user_id = s.id),
+    coalesce((select max(t.score) from public.tests t where t.user_id = s.id), 0),
+    coalesce((select t.score from public.tests t where t.user_id = s.id order by t.created_at desc limit 1), 0),
+    s.last_seen
+  from public.users s join public.group_members m on m.user_id = s.id and m.group_id = p_group
+  order by s.username;
+end $$;
+
+create or replace function public.leader_accounts(p_token text, p_group bigint)
+returns table (id bigint, name text, username text, password text, last_seen timestamptz, is_leader boolean)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  return query select s.id, s.name, s.username, coalesce(s.pw_view, ''), s.last_seen, s.is_leader or s.is_admin
+    from public.users s join public.group_members m on m.user_id = s.id and m.group_id = p_group order by s.username;
+end $$;
+
+create or replace function public.leader_add_users(p_token text, p_group bigint, p_count int default null, p_names text[] default null)
+returns table (name text, username text, password text)
+language plpgsql security definer set search_path = '' as $$
+declare pre text; n int; nm text; pw text; un text; uid bigint; names text[];
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  if p_names is not null then names := array(select left(trim(x), 20) from unnest(p_names) x where trim(x) <> '');
+  elsif p_count between 1 and 100 then names := array_fill(null::text, array[p_count]);
+  else raise exception 'BAD_INPUT'; end if;
+  if coalesce(array_length(names, 1), 0) = 0 or array_length(names, 1) > 100 then raise exception 'BAD_INPUT'; end if;
+  select g.prefix into pre from public.groups g where g.id = p_group;
+  select coalesce(max(substr(s.username, 3)::int), 0) into n from public.users s where s.username ~ ('^' || pre || '[0-9]{2,3}$');
+  foreach nm in array names loop
+    loop
+      n := n + 1; un := pre || lpad(n::text, 2, '0');
+      exit when not exists (select 1 from public.users s where s.username = un);
+    end loop;
+    if n > 999 then raise exception 'PREFIX_FULL'; end if;
+    pw := private.random_digits(6);
+    insert into public.users (name, username, pw_hash, pw_view)
+    values (coalesce(nm, un), un, extensions.crypt(pw, extensions.gen_salt('bf', 8)), pw) returning id into uid;
+    insert into public.group_members (group_id, user_id) values (p_group, uid);
+    name := coalesce(nm, un); username := un; password := pw;
+    return next;
+  end loop;
+end $$;
+
+create or replace function public.leader_rename_user(p_token text, p_user bigint, p_name text) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.check_manage(private.leader_of(p_token), p_user);
+  if coalesce(trim(p_name), '') = '' or char_length(trim(p_name)) > 20 then raise exception 'BAD_NAME'; end if;
+  update public.users set name = trim(p_name) where id = p_user;
+end $$;
+
+create or replace function public.leader_reset_password(p_token text, p_user bigint) returns text
+language plpgsql security definer set search_path = '' as $$
+declare pw text := private.random_digits(6);
+begin
+  perform private.check_manage(private.leader_of(p_token), p_user);
+  update public.users set pw_hash = extensions.crypt(pw, extensions.gen_salt('bf', 8)), pw_view = pw, fail_count = 0, locked_until = null where id = p_user;
+  delete from private.sessions where user_id = p_user;
+  return pw;
+end $$;
+
+create or replace function public.leader_remove_member(p_token text, p_group bigint, p_user bigint) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  delete from public.group_members where group_id = p_group and user_id = p_user;
+end $$;
+
+create or replace function public.leader_user_detail(p_token text, p_user bigint) returns json
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not private.can_view(private.leader_of(p_token), p_user) then raise exception 'FORBIDDEN'; end if;
+  return json_build_object(
+    'today', private.today(),
+    'usage', coalesce((select json_agg(json_build_object('d', u.day, 's', u.seconds) order by u.day)
+                       from public.usage_daily u where u.user_id = p_user and u.day > private.today() - 30), '[]'::json),
+    'tests', coalesce((select json_agg(json_build_object('t', x.created_at, 's', x.score, 'c', x.correct, 'w', x.wrong, 'p', x.pack) order by x.created_at)
+                       from (select * from public.tests t where t.user_id = p_user order by t.created_at desc limit 30) x), '[]'::json),
+    'progress', coalesce((select json_agg(json_build_object('k', p.unit_key, 's', p.stars, 'a', p.adv, 't', p.updated_at))
+                          from public.progress p where p.user_id = p_user), '[]'::json));
+end $$;
+
+create or replace function public.leader_user_days(p_token text, p_user bigint, p_days int default 14) returns json
+language plpgsql stable security definer set search_path = '' as $$
+declare r json;
+begin
+  if not private.can_view(private.leader_of(p_token), p_user) then raise exception 'FORBIDDEN'; end if;
+  select coalesce(json_agg(x order by x.d desc), '[]') into r from (
+    select d.d, coalesce(u.seconds, 0) as sec, u.first_at as first, u.last_at as last,
+      coalesce((select json_agg(json_build_object('k', p.unit_key, 'm', p.mode, 's', p.stars, 't', p.at) order by p.at)
+        from public.plays p where p.user_id = p_user and (p.at at time zone 'Asia/Jakarta')::date = d.d), '[]') as plays,
+      coalesce((select json_agg(json_build_object('s', t.score, 't', t.created_at) order by t.created_at)
+        from public.tests t where t.user_id = p_user and (t.created_at at time zone 'Asia/Jakarta')::date = d.d), '[]') as tests
+    from (select g::date as d from generate_series(private.today() - (least(greatest(p_days, 1), 60) - 1), private.today(), interval '1 day') g) d
+    left join public.usage_daily u on u.user_id = p_user and u.day = d.d
+  ) x;
+  return r;
+end $$;
+
+create or replace function public.leader_day(p_token text, p_group bigint, p_day date) returns json
+language plpgsql stable security definer set search_path = '' as $$
+declare r json;
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  select coalesce(json_agg(json_build_object(
+    'id', s.id, 'name', s.name, 'username', s.username,
+    'sec', coalesce(u.seconds, 0), 'first', u.first_at, 'last', u.last_at,
+    'plays', coalesce((select json_agg(json_build_object('k', p.unit_key, 'm', p.mode, 's', p.stars, 't', p.at) order by p.at)
+       from public.plays p where p.user_id = s.id and (p.at at time zone 'Asia/Jakarta')::date = p_day), '[]'),
+    'tests', coalesce((select json_agg(json_build_object('s', t.score, 'c', t.correct, 'w', t.wrong, 't', t.created_at) order by t.created_at)
+       from public.tests t where t.user_id = s.id and (t.created_at at time zone 'Asia/Jakarta')::date = p_day), '[]')
+  ) order by s.username), '[]') into r
+  from public.users s join public.group_members m on m.user_id = s.id and m.group_id = p_group
+  left join public.usage_daily u on u.user_id = s.id and u.day = p_day;
+  return r;
+end $$;
+
+create or replace function public.leader_hw_day(p_token text, p_group bigint, p_day date) returns json
+language plpgsql stable security definer set search_path = '' as $$
+declare pk text;
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  select coalesce(hw_pack, '') into pk from public.groups where id = p_group;
+  return coalesce((select json_agg(json_build_object(
+      'id', s.id, 'new', h.new_levels, 'target', h.target, 'pack', h.pack, 'asked', r.asked, 'wrong', r.wrong,
+      'pending', (select count(*) from public.reviews v where v.user_id = s.id and v.cleared_at is null)))
+    from public.users s join public.group_members m on m.user_id = s.id and m.group_id = p_group
+    left join public.hw_days h on h.user_id = s.id and h.day = p_day and h.pack = pk
+    left join public.review_days r on r.user_id = s.id and r.day = p_day), '[]'::json);
+end $$;
+
+create or replace function public.leader_writings(p_token text, p_group bigint, p_days int default 14) returns json
+language plpgsql stable security definer set search_path = '' as $$
+declare r json;
+begin
+  perform private.check_group(private.leader_of(p_token), p_group);
+  select coalesce(json_agg(json_build_object('id', w.id, 'sid', s.id, 'name', s.name, 'word', w.word, 'kind', w.kind,
+         'body', w.body, 'ref', w.ref, 'at', w.at, 'note', w.note) order by w.at desc), '[]') into r
+  from public.writings w join public.users s on s.id = w.user_id join public.group_members m on m.user_id = s.id and m.group_id = p_group
+  where w.at > now() - make_interval(days => least(greatest(p_days, 1), 120));
+  return r;
+end $$;
+
+create or replace function public.leader_note_writing(p_token text, p_id bigint, p_note text) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not private.can_view(private.leader_of(p_token), (select user_id from public.writings where id = p_id)) then raise exception 'FORBIDDEN'; end if;
+  update public.writings set note = nullif(left(trim(p_note), 300), ''), noted_at = now() where id = p_id;
+end $$;
+
+-- 仅主账号
+create or replace function public.admin_users(p_token text, p_q text default '')
+returns table (id bigint, username text, name text, email text, is_leader boolean, is_admin boolean,
+               show_on_board boolean, last_seen timestamptz, groups text, stars int)
+language plpgsql stable security definer set search_path = '' as $$
+declare q text := '%' || lower(trim(coalesce(p_q, ''))) || '%';
+begin
+  perform private.admin_of(p_token);
+  return query select u.id, u.username, u.name, u.email, u.is_leader, u.is_admin, u.show_on_board, u.last_seen,
+    (select string_agg(g.name, '、' order by g.name) from public.group_members m join public.groups g on g.id = m.group_id where m.user_id = u.id),
+    coalesce((select sum(p.stars + p.adv)::int from public.progress p where p.user_id = u.id), 0)
+  from public.users u
+  where lower(u.username) like q or lower(u.name) like q or lower(coalesce(u.email, '')) like q
+  order by u.is_admin desc, u.is_leader desc, u.username limit 300;
+end $$;
+
+create or replace function public.admin_set_leader(p_token text, p_user bigint, p_on boolean) returns void
+language plpgsql security definer set search_path = '' as $$
+declare adm bigint := private.admin_of(p_token);
+begin
+  if p_user = adm then raise exception 'BAD_INPUT'; end if;
+  update public.users set is_leader = p_on where id = p_user;
+  if not p_on then update public.groups set leader_id = adm where leader_id = p_user; end if;
+end $$;
+
+create or replace function public.admin_transfer_group(p_token text, p_group bigint, p_leader bigint) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.admin_of(p_token);
+  if not exists (select 1 from public.users where id = p_leader and (is_leader or is_admin)) then raise exception 'BAD_INPUT'; end if;
+  delete from public.group_members where group_id = p_group and user_id = p_leader;
+  update public.groups set leader_id = p_leader where id = p_group;
+end $$;
+
+create or replace function public.admin_add_member(p_token text, p_group bigint, p_user bigint) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.admin_of(p_token);
+  if exists (select 1 from public.groups where id = p_group and leader_id = p_user) then raise exception 'OWN_GROUP'; end if;
+  insert into public.group_members (group_id, user_id) values (p_group, p_user) on conflict do nothing;
+end $$;
+
+-- ========== 权限：private 不对外；public 函数只给前端角色执行 ==========
+revoke all on all functions in schema private from public, anon, authenticated;
+do $$ declare f record; begin
+  for f in select p.oid::regprocedure sig from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and (p.proname ~ '^(user|leader|admin|student)_' or p.proname in ('leaderboard', 'leaderboard_packs'))
+  loop
+    execute 'revoke all on function ' || f.sig || ' from public';
+    execute 'grant execute on function ' || f.sig || ' to anon, authenticated';
+  end loop;
+end $$;
 
 -- ========== 9. 核对：条数与每人星星必须和迁移前一致，否则整体回滚 ==========
 do $$ declare r record; now_n bigint;

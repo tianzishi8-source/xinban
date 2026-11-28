@@ -81,10 +81,12 @@ export async function db({ migrate = [] } = {}) {
   for (const sql of [...BASE(), SEED, ...migrate.map(f => read(f))]) await pg.exec(sql);
   return pg;
 }
+// 像 PostgREST 一样：返回表的函数得到数组，其余得到单个值
 export const rpc = async (pg, fn, args = {}) => {
-  const ks = Object.keys(args);
-  const r = await pg.query(`select public.${fn}(${ks.map((k, i) => `${k} => $${i + 1}`).join(",")}) as r`, ks.map(k => args[k]));
-  return r.rows[0].r;
+  const ks = Object.keys(args), call = `public.${fn}(${ks.map((k, i) => `${k} => $${i + 1}`).join(",")})`, vals = ks.map(k => args[k]);
+  const srf = (await pg.query("select bool_or(proretset) s from pg_proc where proname=$1", [fn])).rows[0].s;
+  if (srf) return (await pg.query(`select to_json(x) r from ${call} x`, vals)).rows.map(r => r.r);
+  return (await pg.query(`select ${call} as r`, vals)).rows[0].r;
 };
 export const one = async (pg, sql, p = []) => (await pg.query(sql, p)).rows[0];
 export const asUid = (pg, uid) => pg.exec(`select set_config('test.uid','${uid ?? ""}',false)`);
