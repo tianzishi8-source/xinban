@@ -6,6 +6,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 URL = "file://" + os.path.join(ROOT, "index.html")
 U, P = "zztest01", "zz123456"
 fails = []
+async def logged_in(pg, name="临时测试"):
+    try: await pg.wait_for_function(f"()=>document.querySelector('#accBtn').textContent.includes('{name}')", timeout=20000)
+    except Exception: pass
 def check(cond, msg):
     print(("ok   " if cond else "FAIL ") + msg)
     if not cond: fails.append(msg)
@@ -23,7 +26,7 @@ async def main():
         check(await pg.locator("#accEmail").is_visible(), "注册页有邮箱（选填）")
         # 登录
         await pg.click("#accTabIn"); await pg.fill("#accUser", U); await pg.fill("#accPw", P)
-        await pg.click("#accGo"); await pg.wait_for_timeout(2500)
+        await pg.click("#accGo"); await logged_in(pg)
         check("临时测试" in (await pg.inner_text("#accBtn")), "顶栏显示显示名")
         await pg.click("#accBtn"); await pg.wait_for_timeout(1200)
         check(await pg.locator("#me").is_visible(), "点显示名打开“我的”")
@@ -31,7 +34,7 @@ async def main():
         check(await pg.input_value("#meUser") == U, "“我的”页登录名只读显示")
         # 改显示名 → 刷新仍在 → 改回
         await pg.fill("#meName", "临时测试二"); await pg.click("#meSave"); await pg.wait_for_timeout(1500)
-        await pg.reload(); await pg.wait_for_timeout(2500)
+        await pg.reload(); await logged_in(pg, "临时测试二")
         check("临时测试二" in (await pg.inner_text("#accBtn")), "改显示名后刷新仍是新名字")
         await pg.click("#accBtn"); await pg.wait_for_timeout(1000)
         await pg.fill("#meName", "临时测试"); await pg.click("#meSave"); await pg.wait_for_timeout(1500)
@@ -42,7 +45,7 @@ async def main():
         await pg.fill("#mePwOld", P); await pg.fill("#mePwNew", "zz654321"); await pg.fill("#mePwNew2", "zz654321")
         await pg.click("#mePwGo"); await pg.wait_for_timeout(1500)
         await pg.click("#meLogout"); await pg.wait_for_timeout(1500)
-        await pg.fill("#accUser", U); await pg.fill("#accPw", "zz654321"); await pg.click("#accGo"); await pg.wait_for_timeout(2500)
+        await pg.fill("#accUser", U); await pg.fill("#accPw", "zz654321"); await pg.click("#accGo"); await logged_in(pg)
         check("临时测试" in (await pg.inner_text("#accBtn")), "改密码后用新密码能登录")
         await pg.click("#accBtn"); await pg.wait_for_timeout(1000)
         await pg.fill("#mePwOld", "zz654321"); await pg.fill("#mePwNew", P); await pg.fill("#mePwNew2", P)
