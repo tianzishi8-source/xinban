@@ -3,7 +3,7 @@
 import asyncio, os, sys
 from playwright.async_api import async_playwright
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-URL = "file://" + os.path.join(ROOT, "index.html")
+URL = os.environ.get("XB_URL") or ("file://" + os.path.join(ROOT, "index.html"))
 U, P = "zztest01", "zz123456"
 fails = []
 async def logged_in(pg, name="临时测试"):
