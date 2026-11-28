@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>心版 · 老师后台</title>
-<link rel="icon" type="image/png" sizes="192x192" href="icons/teacher-icon-192.png">
-<link rel="apple-touch-icon" href="icons/teacher-icon-180.png">
+<title>心版 · 带领者后台</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/leader-icon-192.png">
+<link rel="apple-touch-icon" href="icons/leader-icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="心版后台">
@@ -50,7 +50,7 @@ label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;
 .tabs{display:flex;gap:6px;background:#efe5d3;padding:4px;border-radius:12px}
 .tabs button{flex:1;white-space:nowrap;border:0;background:transparent;padding:8px 10px;border-radius:9px;font-weight:700;color:var(--muted)}
 .tabs button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 6px -3px rgba(120,80,30,.4)}
-/* 班级栏 */
+/* 小组栏 */
 .classbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .classbar select{width:auto;min-width:180px;font-weight:700}
 /* 汇总 */
@@ -75,7 +75,7 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#fff7e8}
 .pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px}
 .pill.on{background:#e3f4e9;color:#2e7d4f}.pill.mid{background:#fff1d6;color:#9a6418}.pill.off{background:#f6e3dc;color:#a8452c}.pill.none{background:#eee8de;color:#8a7d6b}
 .empty{text-align:center;padding:30px 10px;color:var(--muted)}
-/* 学生详情 */
+/* 组员详情 */
 .detail{display:flex;flex-direction:column;gap:16px}
 .dhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .dhead h3{font-size:22px}
@@ -132,43 +132,54 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
 .wbody{font:17px/1.6 Georgia,"Times New Roman",serif;margin:6px 0}
 .wref{font-size:13px;color:var(--muted);font-family:Georgia,"Times New Roman",serif}
 .wnote{display:flex;gap:6px;margin-top:6px}.wnote input{flex:1;min-width:0;padding:7px 10px}
+.tip{border:1px dashed #d8c7a8;border-radius:10px;padding:6px 10px;margin:4px 0 10px;font-size:13px;line-height:1.5;color:#7a6a55}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top noprint">
-    <div class="brand"><h1>心版</h1><span>老师后台</span></div>
+    <div class="brand"><h1>心版</h1><span>带领者后台</span></div>
     <div class="row"><a class="btn ghost small" href="./" style="text-decoration:none">回到游戏</a><span class="hint" id="me"></span><button class="btn ghost small" id="logout" hidden>退出登录</button></div>
   </div>
 
   <!-- 登录 / 注册 -->
   <section class="card login" id="loginBox" hidden>
-    <h2>老师登录</h2>
-    <div class="tabs" role="group" aria-label="登录或注册"><button id="tLogin" aria-pressed="true">登录</button><button id="tSign" aria-pressed="false">注册老师账号</button></div>
+    <h2>带领者登录</h2>
     <form id="authForm" class="login" style="margin:0" novalidate>
-      <label for="email">邮箱<input id="email" type="email" autocomplete="email" placeholder="you@example.com"></label>
-      <label for="pass">密码<input id="pass" type="password" autocomplete="current-password" placeholder="至少 6 位"></label>
+      <label for="user">登录名<input id="user" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="和游戏里的登录名一样"></label>
+      <p class="tip">登录名：登录时用，只有你自己知道，建好后不能改</p>
+      <label for="pass">密码<input id="pass" type="password" autocomplete="current-password" placeholder="和游戏里的密码一样"></label>
       <p class="msg" id="authMsg" role="alert"></p>
       <button class="btn" id="authGo" type="submit">登录</button>
     </form>
-    <p class="hint" style="text-align:center">学生不在这里登录。学生账号由你在后台生成，学生在游戏首页登录。</p>
+    <p class="hint" style="text-align:center">和游戏用同一个账号。只有带领者和主账号能进入这里；普通用户请回到游戏。</p>
   </section>
 
   <!-- 主界面 -->
   <section id="app" hidden>
     <div class="wrap">
       <div class="card classbar noprint">
-        <label for="classSel" style="flex-direction:row;align-items:center;gap:8px">班级<select id="classSel"></select></label>
-        <form id="hwForm" class="row" style="flex-wrap:nowrap;gap:6px" title="作业经文包：学生的测验榜默认显示它；每天关数大于 0 时，学生要先过完今天的新关卡，才能玩其他经文包、对战和词汇。"><label for="hwPack" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap">作业经文包<input id="hwPack" list="hwList" placeholder="未设置" maxlength="40" style="width:130px"></label><label for="hwDaily" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap" title="每天要完成的新关卡数。完成前，学生不能玩其他经文包、对战和词汇。填 0 表示不限制。">每天<input id="hwDaily" type="number" min="0" max="50" inputmode="numeric" style="width:56px;text-align:center" placeholder="0">关</label><button class="btn small" type="submit">保存</button><span class="hint" id="hwMsg"></span></form>
+        <label for="classSel" style="flex-direction:row;align-items:center;gap:8px">小组<select id="classSel"></select></label>
+        <form id="hwForm" class="row" style="flex-wrap:nowrap;gap:6px" title="作业经文包：组员的测验榜默认显示它；每天关数大于 0 时，组员要先过完今天的新关卡，才能玩其他经文包、对战和词汇。"><label for="hwPack" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap">作业经文包<input id="hwPack" list="hwList" placeholder="未设置" maxlength="40" style="width:130px"></label><label for="hwDaily" style="flex-direction:row;align-items:center;gap:6px;white-space:nowrap" title="每天要完成的新关卡数。完成前，组员不能玩其他经文包、对战和词汇。填 0 表示不限制。">每天<input id="hwDaily" type="number" min="0" max="50" inputmode="numeric" style="width:56px;text-align:center" placeholder="0">关</label><button class="btn small" type="submit">保存</button><span class="hint" id="hwMsg"></span></form>
         <datalist id="hwList"><option value="创世记"><option value="出埃及记"><option value="利未记"><option value="民数记"><option value="申命记"><option value="约书亚记"><option value="士师记"><option value="撒母耳记上"><option value="撒母耳记下"><option value="列王纪上"><option value="列王纪下"><option value="诗篇"><option value="箴言"><option value="传道书"><option value="雅歌"><option value="以赛亚书"><option value="耶利米书"><option value="耶利米哀歌"><option value="以西结书"><option value="但以理书"><option value="何西阿书"><option value="约珥书"><option value="阿摩司书"><option value="约拿书"><option value="弥迦书"><option value="西番雅书"><option value="撒迦利亚书"><option value="玛拉基书"><option value="马太福音"><option value="马可福音"><option value="路加福音"><option value="约翰福音"><option value="使徒行传"><option value="罗马书"><option value="哥林多前书"><option value="哥林多后书"><option value="加拉太书"><option value="以弗所书"><option value="腓立比书"><option value="歌罗西书"><option value="帖撒罗尼迦前书"><option value="帖撒罗尼迦后书"><option value="提摩太前书"><option value="提摩太后书"><option value="提多书"><option value="希伯来书"><option value="雅各书"><option value="彼得前书"><option value="彼得后书"><option value="约翰一书"><option value="犹大书"><option value="启示录"><option value="历史书精选"><option value="诗歌智慧书精选"><option value="先知书精选"><option value="书信精选"><option value="新生命1·第一课 神是怎样的"><option value="新生命1·第二课 罪如何进入世界"><option value="新生命1·第三课 人的问题及神的答案"><option value="新生命1·第四课 耶稣基督真是神吗？"><option value="新生命1·第五课 耶稣基督的死"><option value="新生命1·第六课 耶稣基督的复活"><option value="新生命1·第七课 我当如何行才可以得救（上）"><option value="新生命1·第八课 我当如何行才可以得救（下）"><option value="新生命1·第九课 我怎知我已得救"><option value="新生命1·第十课 与基督联合"><option value="新生命1·第十一课 耶稣基督的再临"><option value="新生命1·第十二课 你信的是这个吗"><option value="新生命2·第一课 耶稣基督，万有的中心"><option value="新生命2·第二课 耶稣基督，所应许的救主"><option value="新生命2·第三课 耶稣基督，神在肉身显现"><option value="新生命2·第四课 耶稣基督，天国君王"><option value="新生命2·第五课 耶稣基督，门徒之主"><option value="新生命2·第六课 耶稣基督，道路真理生命"><option value="新生命2·第七课 耶稣基督，背负我们罪孽的羔羊"><option value="新生命2·第八课 耶稣基督，复活的生命之主"><option value="新生命2·第九课 耶稣基督，天上地上同在的主"><option value="新生命2·第十课 耶稣基督，我们的挽回祭"><option value="新生命2·第十一课 耶稣基督，我们的挽回祭"><option value="新生命2·第十二课 耶稣基督，我们的挽回祭"></datalist>
-        <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vHw" aria-pressed="true">作业检查</button><button id="vStats" aria-pressed="false">学习情况</button><button id="vWrite" aria-pressed="false">造句</button><button id="vAcct" aria-pressed="false">学生账号与密码</button></div>
+        <div class="tabs" role="group" aria-label="页面" style="flex:0 0 auto"><button id="vHw" aria-pressed="true">作业检查</button><button id="vStats" aria-pressed="false">学习情况</button><button id="vWrite" aria-pressed="false">造句</button><button id="vAcct" aria-pressed="false">组员账号与密码</button><button id="vUsers" aria-pressed="false" hidden>全部用户</button></div>
+        <span class="hint" id="codeBox"></span><button class="btn ghost small" id="regenCode" type="button" title="重新生成后，旧邀请码立刻失效">换邀请码</button>
         <span style="flex:1"></span>
-        <form id="newClass" class="row" style="flex-wrap:nowrap"><input id="newClassName" placeholder="新班级名称，例如 初二一班" maxlength="40" style="width:200px"><button class="btn small" type="submit">新建班级</button></form>
+        <form id="newClass" class="row" style="flex-wrap:nowrap"><input id="newClassName" placeholder="新小组名称，例如 周五查经小组" maxlength="40" style="width:200px"><button class="btn small" type="submit">新建小组</button></form>
       </div>
       <p class="msg err" id="appMsg"></p>
 
-      <div id="noClass" class="card empty" hidden>还没有班级。在上面输入班级名称，点“新建班级”。</div>
+      <div id="noClass" class="card empty" hidden>还没有小组。在上面输入小组名称，点“新建小组”。</div>
 
+      <!-- 全部用户（仅主账号） -->
+      <div id="usersView" hidden>
+        <div class="card">
+          <div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="font-size:20px">全部用户</h2>
+            <form id="uForm" class="row" style="flex-wrap:nowrap"><input id="uq" placeholder="搜登录名、显示名或邮箱" style="width:220px"><button class="btn small">搜索</button></form></div>
+          <p class="hint">在这里指定或取消带领者，把人加进某个小组，或者把小组交给某个带领者。取消带领者后，他带的小组转给主账号。</p>
+          <div class="tablewrap"><table id="usersTbl"></table></div>
+        </div>
+      </div>
       <!-- 作业检查 -->
       <div id="hwView" hidden>
         <div class="card">
@@ -178,7 +189,7 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
           </div>
           <div class="hwsum" id="hwSum"></div>
           <div class="tablewrap"><table id="hwTbl"></table></div>
-          <p class="hint" style="margin-top:10px">点一行看这个学生最近一周每天的记录。练习时长只算页面开着、并且在操作的时间；星星颜色越深，那一遍错得越少；带蓝框的是高阶默写。</p>
+          <p class="hint" style="margin-top:10px">点一行看这个组员最近一周每天的记录。练习时长只算页面开着、并且在操作的时间；星星颜色越深，那一遍错得越少；带蓝框的是高阶默写。</p>
         </div>
       </div>
 
@@ -187,8 +198,8 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
         <div class="tiles" id="tiles"></div>
         <div class="card">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
-            <h2 style="font-size:20px">全班一览</h2>
-            <span class="hint">点一行查看这个学生的详细情况　·　时长按雅加达时间计算</span>
+            <h2 style="font-size:20px">全组一览</h2>
+            <span class="hint">点一行查看这个组员的详细情况　·　时长按雅加达时间计算</span>
           </div>
           <div class="tablewrap"><table id="tbl"></table></div>
         </div>
@@ -196,32 +207,36 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
 
       <div class="card detail" id="detail" hidden></div>
 
-      <!-- 学生账号 -->
+      <!-- 组员账号 -->
       <!-- 造句 -->
       <div id="writeView" hidden>
         <div class="card">
-          <div class="hwbar"><b style="font-family:var(--f-head);font-size:18px">学生写的英文句子</b>
+          <div class="hwbar"><b style="font-family:var(--f-head);font-size:18px">组员写的英文句子</b>
             <div class="daynav"><label class="goal"><input type="checkbox" id="wAll" style="width:auto"> 也显示“看中文写英文”的译句</label><select id="wDays" style="width:auto;padding:6px 8px"><option value="7">近 7 天</option><option value="14" selected>近 14 天</option><option value="30">近 30 天</option></select></div></div>
-          <p class="hint" style="margin:0 0 10px">“自己造句”是学生用这个词写的句子，游戏只检查了有没有用到这个词，意思对不对需要您看。写了评语，学生在“神学词汇”页能看到。</p>
+          <p class="hint" style="margin:0 0 10px">“自己造句”是组员用这个词写的句子，游戏只检查了有没有用到这个词，意思对不对需要您看。写了评语，组员在“神学词汇”页能看到。</p>
           <div id="wList"></div>
         </div>
       </div>
       <div id="acctView" hidden>
         <div>
           <div class="card" style="display:flex;flex-direction:column;gap:12px">
-            <h2 style="font-size:20px">添加学生</h2>
-            <p class="hint">每行写一个学生的名字，系统会自动生成账号和 4 位数字密码。</p>
-            <textarea id="names" placeholder="林小雨&#10;王约翰&#10;陈路加"></textarea>
+            <h2 style="font-size:20px">批量建账号</h2>
+            <p class="hint">填人数就行：系统接着这个小组的前缀往下编号（例如 km10、km11……），每人一个 6 位数字初始密码，显示名先和登录名一样，之后可以逐个改。也可以在下面粘贴一串名字，按名字生成。</p>
+            <label for="addCount" style="flex-direction:row;align-items:center;gap:8px">人数<input id="addCount" type="number" min="1" max="100" inputmode="numeric" style="width:80px" placeholder="例如 8"></label>
+            <textarea id="names" placeholder="（可选）每行一个显示名，例如&#10;林小雨&#10;王约翰"></textarea>
             <div class="row"><button class="btn" id="addGo">生成账号</button><span class="msg" id="addMsg"></span></div>
+            <div id="newAccts"></div>
           </div>
         </div>
         <div class="card" id="acctCard" style="margin-top:16px">
           <div class="row noprint" style="justify-content:space-between;margin-bottom:6px">
-            <h2 style="font-size:20px">全班账号和密码</h2>
-            <div class="row"><button class="btn ghost small" id="copyAll">复制全班账号</button><button class="btn ghost small" id="printAll">打印</button></div>
+            <h2 style="font-size:20px">全组账号和密码</h2>
+            <div class="row"><button class="btn ghost small" id="copyAll">复制全组账号</button><button class="btn ghost small" id="printAll">打印</button></div>
           </div>
           <h2 class="printonly" style="font-size:22px;display:none;margin-bottom:6px" id="printTitle"></h2>
           <p class="hint" id="siteLine" style="margin-bottom:8px"></p>
+          <p class="tip">登录名：登录时用，只有你自己知道，建好后不能改</p>
+          <p class="tip">显示名：别人在榜单和小组里看到的名字，随时可以改</p>
           <div class="tablewrap"><table id="acctTbl"></table></div>
         </div>
       </div>
@@ -229,11 +244,16 @@ td.verses{white-space:normal;min-width:240px;max-width:420px}
   </section>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-/* 老师专属链接：teacher.html#k=钥匙，打开一次后这台设备会记住，不用登录 */
-const KEY=(()=>{const m=location.hash.match(/k=([\w-]{20,})/);try{if(m){localStorage.setItem("xb-teacher-key",m[1])}return m?m[1]:localStorage.getItem("xb-teacher-key")}catch(e){return m&&m[1]}})();
-const SB=supabase.createClient("https://ndaliuqndcongzdaekgu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWxpdXFuZGNvbmd6ZGFla2d1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTg5MDIsImV4cCI6MjEwOTM3NDkwMn0.W6gYi-pRe7bM5adLl0YpwtqJq9lSQ0OnextINsOGrr8",KEY?{global:{headers:{"x-teacher-key":KEY}},auth:{persistSession:false}}:undefined);
+/* 带领者后台：用游戏的同一个账号登录（登录名 + 密码）。带领者专属链接 leader.html#k=钥匙：这台设备记住钥匙，不用登录。 */
+const KEY=(()=>{const m=location.hash.match(/k=([\w-]{20,})/);try{if(m){localStorage.setItem("xb-leader-key",m[1])}return m?m[1]:(localStorage.getItem("xb-leader-key")||localStorage.getItem("xb-teacher-key"))}catch(e){return m&&m[1]}})();
+const SB_URL="https://ndaliuqndcongzdaekgu.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWxpdXFuZGNvbmd6ZGFla2d1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTg5MDIsImV4cCI6MjEwOTM3NDkwMn0.W6gYi-pRe7bM5adLl0YpwtqJq9lSQ0OnextINsOGrr8";
+let TOK=(()=>{try{return localStorage.getItem("xb-leader-tok")}catch(e){return null}})();
+const SB={async rpc(fn,args){const body={...(args||{})};if(fn!=="user_login")body.p_token=TOK||null;
+  const h={apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,"Content-Type":"application/json"};if(KEY&&!TOK)h["x-leader-key"]=KEY;
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",headers:h,body:JSON.stringify(body)});const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch(e){}
+    if(!r.ok){const e={message:(d&&d.message)||("HTTP "+r.status)};if(e.message==="SESSION_EXPIRED")setTimeout(()=>signedOut("登录已过期，请重新登录。"),0);return {data:null,error:e}}
+    return {data:d,error:null}}catch(e){return {data:null,error:{message:"NETWORK"}}}}};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const BOOKS={"创":"创世记","出":"出埃及记","利":"利未记","民":"民数记","申":"申命记","书":"约书亚记","士":"士师记","得":"路得记","撒上":"撒母耳记上","撒下":"撒母耳记下","王上":"列王纪上","王下":"列王纪下","代上":"历代志上","代下":"历代志下","拉":"以斯拉记","尼":"尼希米记","斯":"以斯帖记","伯":"约伯记","诗":"诗篇","箴":"箴言","传":"传道书","歌":"雅歌","赛":"以赛亚书","耶":"耶利米书","哀":"耶利米哀歌","结":"以西结书","但":"但以理书","何":"何西阿书","珥":"约珥书","摩":"阿摩司书","俄":"俄巴底亚书","拿":"约拿书","弥":"弥迦书","鸿":"那鸿书","哈":"哈巴谷书","番":"西番雅书","该":"哈该书","亚":"撒迦利亚书","玛":"玛拉基书","太":"马太福音","可":"马可福音","路":"路加福音","约":"约翰福音","徒":"使徒行传","罗":"罗马书","林前":"哥林多前书","林后":"哥林多后书","加":"加拉太书","弗":"以弗所书","腓":"腓立比书","西":"歌罗西书","帖前":"帖撒罗尼迦前书","帖后":"帖撒罗尼迦后书","提前":"提摩太前书","提后":"提摩太后书","多":"提多书","门":"腓利门书","来":"希伯来书","雅":"雅各书","彼前":"彼得前书","彼后":"彼得后书","约壹":"约翰一书","约贰":"约翰二书","约叁":"约翰三书","犹":"犹大书","启":"启示录"};
@@ -241,71 +261,96 @@ const BORDER=Object.keys(BOOKS);
 /* 出处里的书卷：中文“约 3:16”→约；英文“1 John 3:16”→1 John */
 const bookOf=k=>k.replace(/#\d+$/,"").replace(/\s+\d+:[\d:,\-–]+$/,"").replace(/\s+(L\d+(-\d+)?|全文|Full)$/,"");
 const NONESV=new Set(["The Lord's Prayer","The Apostles' Creed"]);
-let CLASSES=[],CID=null,ROWS=[],SORT={k:"username",d:1},signMode=false;
+let CLASSES=[],CID=null,ROWS=[],SORT={k:"username",d:1},ME=null;
 
 /* ---------- 文字格式 ---------- */
 function dur(sec){sec=sec||0;if(sec<60)return sec?"不到 1 分钟":"0";const m=Math.round(sec/60);if(m<60)return m+" 分钟";const h=Math.floor(m/60),r=m%60;return h+" 小时"+(r?" "+r+" 分":"")}
 function ago(t){if(!t)return "从未登录";const s=(Date.now()-new Date(t))/1000;if(s<120)return "刚刚";if(s<3600)return Math.round(s/60)+" 分钟前";if(s<86400)return Math.round(s/3600)+" 小时前";const d=Math.round(s/86400);return d<30?d+" 天前":new Date(t).toLocaleDateString("zh-CN")}
 function activity(r){if(!r.last_seen)return '<span class="pill none">未登录过</span>';const days=(Date.now()-new Date(r.last_seen))/864e5;
   if(r.today_sec>0)return '<span class="pill on">今天练过</span>';if(days<3)return '<span class="pill mid">'+ago(r.last_seen)+'</span>';return '<span class="pill off">'+ago(r.last_seen)+'</span>'}
-const errText=e=>{const m=(e&&e.message)||"";if(/Invalid login/i.test(m))return "邮箱或密码不对。";if(/Email not confirmed/i.test(m))return "邮箱还没确认，请先到邮箱点确认链接。";if(/already registered/i.test(m))return "这个邮箱已经注册过，请直接登录。";if(/Password should be/i.test(m))return "密码至少 6 位。";if(/NOT_YOUR_CLASS/.test(m))return "没有权限操作这个班级。";return "出错了："+m};
+const errText=e=>{const m=(e&&e.message)||"";return {BAD_LOGIN:"登录名或密码不对。",LOCKED:"密码输错太多次，请 10 分钟后再试。",NOT_LEADER:"你还不是带领者。请找主账号开通带领者权限。",
+  NOT_ADMIN:"只有主账号能做这件事。",FORBIDDEN:"没有权限操作这个小组或这个人。",SESSION_EXPIRED:"登录已过期，请重新登录。",BAD_NAME:"显示名要 1–20 个字。",
+  BAD_INPUT:"填写的内容不对，请检查一下。",PREFIX_FULL:"这个小组的编号用完了。",NETWORK:"连不上网络，请稍后再试。"}[m]||"出错了："+m};
 
 /* ---------- 登录 ---------- */
-function setMode(sign){signMode=sign;$("#tLogin").setAttribute("aria-pressed",!sign);$("#tSign").setAttribute("aria-pressed",sign);$("#authGo").textContent=sign?"注册":"登录";$("#pass").autocomplete=sign?"new-password":"current-password";$("#authMsg").textContent=""}
-$("#tLogin").onclick=()=>setMode(false);$("#tSign").onclick=()=>setMode(true);
-$("#authForm").onsubmit=async e=>{e.preventDefault();const email=$("#email").value.trim(),password=$("#pass").value,m=$("#authMsg");m.className="msg";
-  if(!email||password.length<6){m.className="msg err";m.textContent="请输入邮箱和至少 6 位的密码。";return}
-  $("#authGo").disabled=true;
-  if(signMode){const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:location.href.split("#")[0]}});
-    if(error){m.className="msg err";m.textContent=errText(error)}
-    else if(!data.session){m.className="msg ok";m.textContent="注册成功！请到邮箱点确认链接，然后回来登录。"}
-  }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error){m.className="msg err";m.textContent=errText(error)}}
-  $("#authGo").disabled=false};
-$("#logout").onclick=async()=>{if(KEY){try{localStorage.removeItem("xb-teacher-key")}catch(e){}location.replace(location.pathname);return}await SB.auth.signOut()};
-SB.auth.onAuthStateChange((ev,session)=>{if(KEY)return;const on=!!session;$("#loginBox").hidden=on;$("#app").hidden=!on;$("#logout").hidden=!on;$("#me").textContent=on?session.user.email:"";if(on)loadClasses();});
+function signedIn(me){ME=me;$("#loginBox").hidden=true;$("#app").hidden=false;$("#logout").hidden=false;
+  $("#me").textContent=KEY&&!TOK?"带领者专属链接":`${me.name}（${me.username}）${me.is_admin?" · 主账号":""}`;$("#vUsers").hidden=!me.is_admin||!TOK;loadClasses()}
+function signedOut(msg){TOK=null;try{localStorage.removeItem("xb-leader-tok")}catch(e){}ME=null;$("#app").hidden=true;$("#logout").hidden=true;$("#me").textContent="";
+  $("#loginBox").hidden=false;$("#authMsg").className="msg err";$("#authMsg").textContent=msg||""}
+$("#authForm").onsubmit=async e=>{e.preventDefault();const u=$("#user").value.replace(/\s+/g,"").toLowerCase(),p=$("#pass").value.trim(),m=$("#authMsg");m.className="msg";
+  if(!u||!p){m.className="msg err";m.textContent="请输入登录名和密码。";return}
+  $("#authGo").disabled=true;const res=await SB.rpc("user_login",{p_username:u,p_password:p}),data=res.data,error=res.error||(data&&data.error?{message:data.error}:null);
+  if(error){$("#authGo").disabled=false;m.className="msg err";m.textContent=errText(error);return}
+  TOK=data.token;const r=await SB.rpc("leader_me");$("#authGo").disabled=false;
+  if(r.error){const msg=errText(r.error);await SB.rpc("user_logout");signedOut(msg);return}
+  try{localStorage.setItem("xb-leader-tok",TOK)}catch(e){}$("#pass").value="";signedIn(r.data)};
+$("#logout").onclick=async()=>{if(KEY&&!TOK){try{localStorage.removeItem("xb-leader-key")}catch(e){}location.replace(location.pathname);return}
+  await SB.rpc("user_logout");signedOut("")};
 
-/* ---------- 班级 ---------- */
-async function loadClasses(keep){const {data,error}=await SB.rpc("teacher_classes");
+/* ---------- 小组 ---------- */
+async function loadClasses(keep){const {data,error}=await SB.rpc("leader_groups");
   if(error){$("#appMsg").textContent=errText(error);return}
   CLASSES=data||[];const sel=$("#classSel");sel.innerHTML=CLASSES.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
   $("#noClass").hidden=CLASSES.length>0;
-  if(KEY&&!CLASSES.length){$("#appMsg").textContent="这个链接打不开数据，可能复制时缺了几个字符。请重新打开完整的链接。"}
   if(!CLASSES.length){CID=null;$("#statsView").hidden=$("#acctView").hidden=true;return}
-  const saved=+localStorage.getItem("xb-teacher-class")||0;CID=keep||(CLASSES.some(c=>c.id===saved)?saved:CLASSES[0].id);sel.value=CID;loadHw();showView()}
+  const saved=+localStorage.getItem("xb-leader-group")||0;CID=keep||(CLASSES.some(c=>c.id===saved)?saved:CLASSES[0].id);sel.value=CID;loadHw();drawCode();showView()}
+function drawCode(){const c=CLASSES.find(x=>x.id===CID)||{};$("#codeBox").innerHTML=`邀请码 <b class="pw">${esc(c.invite_code||"")}</b> · 账号前缀 <b class="pw">${esc(c.prefix||"")}</b>${ME&&ME.is_admin&&c.leader_name?` · 带领者 ${esc(c.leader_name)}`:""}`}
 let HW={};
 function drawHwForm(){const h=HW[CID]||{};$("#hwPack").value=h.pack||"";$("#hwDaily").value=h.daily||"";$("#hwMsg").textContent=""}
-async function loadHw(){const {data}=await SB.rpc("teacher_homework_v2");HW={};(data||[]).forEach(r=>HW[r.id]={pack:r.hw_pack||"",daily:r.hw_daily||0});drawHwForm()}
+function loadHw(){HW={};CLASSES.forEach(r=>HW[r.id]={pack:r.hw_pack||"",daily:r.hw_daily||0});drawHwForm()}
 $("#hwForm").onsubmit=async e=>{e.preventDefault();const v=$("#hwPack").value.trim(),d=Math.min(50,Math.max(0,Math.round(+$("#hwDaily").value||0)));
   if(d>0&&!v){$("#hwMsg").textContent="先填作业经文包";return}
-  const {error}=await SB.rpc("teacher_set_homework",{p_class:CID,p_pack:v,p_daily:d});
+  const {error}=await SB.rpc("leader_set_homework",{p_group:CID,p_pack:v,p_daily:d});
   if(error){$("#hwMsg").textContent=errText(error);return}
   HW[CID]={pack:v,daily:d};$("#hwDaily").value=d||"";$("#hwMsg").textContent=!v?"已取消作业":d?`已保存：每天 ${d} 关`:"已保存（不限每天关数）";if(VIEW==="hw")loadDay()};
-$("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-teacher-class",CID);drawHwForm();$("#detail").hidden=true;$("#addMsg").textContent="";showView()};
+$("#classSel").onchange=()=>{CID=+$("#classSel").value;localStorage.setItem("xb-leader-group",CID);drawHwForm();drawCode();$("#detail").hidden=true;$("#addMsg").textContent="";showView()};
+$("#regenCode").onclick=async()=>{if(!CID||!confirm("换一个新的邀请码？旧邀请码会立刻失效。"))return;
+  const {data,error}=await SB.rpc("leader_regen_code",{p_group:CID});if(error){$("#appMsg").textContent=errText(error);return}
+  const c=CLASSES.find(x=>x.id===CID);if(c)c.invite_code=data;drawCode()};
 $("#newClass").onsubmit=async e=>{e.preventDefault();const n=$("#newClassName").value.trim();if(!n)return;
-  const {data,error}=await SB.rpc("teacher_create_class",{p_name:n});if(error){$("#appMsg").textContent=errText(error);return}
-  $("#newClassName").value="";localStorage.setItem("xb-teacher-class",data.id);await loadClasses(data.id);setView("acct")};
+  const {data,error}=await SB.rpc("leader_create_group",{p_name:n});if(error){$("#appMsg").textContent=errText(error);return}
+  $("#newClassName").value="";localStorage.setItem("xb-leader-group",data.id);await loadClasses(data.id);setView("acct")};
 
-let VIEW=(()=>{try{return localStorage.getItem("xb-teacher-view")||"hw"}catch(e){return "hw"}})();if(!["hw","stats","acct","write"].includes(VIEW))VIEW="hw";
-function setView(v){if(v!==VIEW)$("#detail").hidden=true;VIEW=v;try{localStorage.setItem("xb-teacher-view",v)}catch(e){}showView()}
-$("#vHw").onclick=()=>setView("hw");$("#vStats").onclick=()=>setView("stats");$("#vAcct").onclick=()=>setView("acct");$("#vWrite").onclick=()=>setView("write");
-function showView(){if(!CID)return;[["hw","#vHw"],["stats","#vStats"],["write","#vWrite"],["acct","#vAcct"]].forEach(([k,b])=>$(b).setAttribute("aria-pressed",VIEW===k));
-  $("#hwView").hidden=VIEW!=="hw";$("#statsView").hidden=VIEW!=="stats";$("#acctView").hidden=VIEW!=="acct";$("#writeView").hidden=VIEW!=="write";if(VIEW==="acct"||VIEW==="write")$("#detail").hidden=true;
+let VIEW=(()=>{try{return localStorage.getItem("xb-leader-view")||"hw"}catch(e){return "hw"}})();if(!["hw","stats","acct","write","users"].includes(VIEW))VIEW="hw";
+function setView(v){if(v!==VIEW)$("#detail").hidden=true;VIEW=v;try{localStorage.setItem("xb-leader-view",v)}catch(e){}showView()}
+$("#vHw").onclick=()=>setView("hw");$("#vStats").onclick=()=>setView("stats");$("#vAcct").onclick=()=>setView("acct");$("#vWrite").onclick=()=>setView("write");$("#vUsers").onclick=()=>setView("users");
+function showView(){if(VIEW==="users"&&!(ME&&ME.is_admin&&TOK))VIEW="hw";if(!CID&&VIEW!=="users")return;
+  [["hw","#vHw"],["stats","#vStats"],["write","#vWrite"],["acct","#vAcct"],["users","#vUsers"]].forEach(([k,b])=>$(b).setAttribute("aria-pressed",VIEW===k));
+  $("#hwView").hidden=VIEW!=="hw";$("#statsView").hidden=VIEW!=="stats";$("#acctView").hidden=VIEW!=="acct";$("#writeView").hidden=VIEW!=="write";$("#usersView").hidden=VIEW!=="users";
+  if(VIEW==="users"){$("#detail").hidden=true;loadUsers();return}if(VIEW==="acct"||VIEW==="write")$("#detail").hidden=true;
   loadOverview();loadAccounts();if(VIEW==="hw")loadDay();if(VIEW==="write")loadWritings()}
+
+/* ---------- 全部用户（仅主账号） ---------- */
+let USERS=[];
+async function loadUsers(){const {data,error}=await SB.rpc("admin_users",{p_q:$("#uq").value.trim()});if(error){$("#appMsg").textContent=errText(error);return}USERS=data||[];drawUsers()}
+function drawUsers(){const t=$("#usersTbl");if(!USERS.length){t.innerHTML=`<tbody><tr><td class="empty">没有找到。</td></tr></tbody>`;return}
+  const opts=CLASSES.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  t.innerHTML=`<thead><tr><th>显示名</th><th>登录名</th><th>小组</th><th>星星</th><th>身份</th><th class="ops"></th></tr></thead><tbody>`+USERS.map(u=>`<tr data-id="${u.id}" style="cursor:default">
+    <td>${esc(u.name)}${u.show_on_board?"":' <span class="hint">（总榜已隐藏）</span>'}</td><td class="pw">${esc(u.username)}</td><td>${esc(u.groups||"—")}</td><td>${u.stars}</td>
+    <td>${u.is_admin?"主账号":u.is_leader?"带领者":"用户"}</td>
+    <td class="ops"><div class="row" style="justify-content:flex-end;flex-wrap:nowrap">${u.is_admin?"":`<button class="btn ghost small" data-op="lead">${u.is_leader?"取消带领者":"设为带领者"}</button>`}
+      ${opts?`<select data-g style="width:auto">${opts}</select><button class="btn ghost small" data-op="add">加进小组</button>${u.is_leader&&!u.is_admin?'<button class="btn ghost small" data-op="give">把小组交给他</button>':""}`:""}</div></td></tr>`).join("")+`</tbody>`;
+  t.querySelectorAll("button[data-op]").forEach(b=>b.onclick=async()=>{const tr=b.closest("tr"),id=+tr.dataset.id,u=USERS.find(x=>x.id===id);let r;
+    if(b.dataset.op==="lead"){if(u.is_leader&&!confirm(`取消 ${u.name} 的带领者资格？他带的小组会转给主账号。`))return;r=await SB.rpc("admin_set_leader",{p_user:id,p_on:!u.is_leader})}
+    else if(b.dataset.op==="give"){const g=+tr.querySelector("[data-g]").value,gn=(CLASSES.find(c=>c.id===g)||{}).name||"";if(!confirm(`把“${gn}”交给 ${u.name} 带领？`))return;r=await SB.rpc("admin_transfer_group",{p_group:g,p_leader:id})}
+    else r=await SB.rpc("admin_add_member",{p_group:+tr.querySelector("[data-g]").value,p_user:id});
+    if(r.error){$("#appMsg").textContent=errText(r.error);return}$("#appMsg").textContent="";await loadUsers();loadClasses(CID)})}
+$("#uForm").onsubmit=e=>{e.preventDefault();loadUsers()};
 
 /* ---------- 造句 ---------- */
 let WR=[];
 $("#wAll").onchange=()=>drawWritings();$("#wDays").onchange=()=>loadWritings();
-async function loadWritings(){const cid=CID;const {data,error}=await SB.rpc("teacher_writings",{p_class:CID,p_days:+$("#wDays").value});if(cid!==CID)return;
+async function loadWritings(){const cid=CID;const {data,error}=await SB.rpc("leader_writings",{p_group:CID,p_days:+$("#wDays").value});if(cid!==CID)return;
   if(error){$("#wList").innerHTML=`<p class="msg err">${esc(errText(error))}</p>`;return}WR=data||[];drawWritings()}
 function drawWritings(){const all=$("#wAll").checked,L=WR.filter(w=>all||w.kind!=="translate");
-  if(!L.length){$("#wList").innerHTML=`<p class="empty">这段时间还没有学生写句子。</p>`;return}
+  if(!L.length){$("#wList").innerHTML=`<p class="empty">这段时间还没有组员写句子。</p>`;return}
   const day=t=>new Date(t).toLocaleDateString("zh-CN",{timeZone:TZ,month:"numeric",day:"numeric",weekday:"short"});
   let last="";$("#wList").innerHTML=L.map(w=>{const d=day(w.at),h=d!==last?`<h4 class="wday">${d}</h4>`:"";last=d;
     return h+`<div class="wrow" data-id="${w.id}"><div class="wmeta"><b>${esc(w.name)}</b><span class="pill ${w.kind==="write"?"on":w.kind==="assess"?"mid":"none"}">${w.kind==="write"?"自己造句":w.kind==="assess"?"词汇测评":"译句"}</span><span class="wword">${esc(w.word)}</span><small>${hm(w.at)}</small></div>
       <div class="wbody">${esc(w.body)}</div>${w.kind==="translate"&&w.ref?`<div class="wref">参考：${esc(w.ref)}</div>`:w.kind==="assess"&&w.ref?`<div class="wref">${esc(w.ref)}</div>`:""}
       <div class="wnote"><input placeholder="写一句评语（可不写）" value="${esc(w.note||"")}"><button class="btn small" data-a="save">保存</button><button class="btn ghost small" data-a="good">👍 好</button></div></div>`}).join("");
   $("#wList").querySelectorAll(".wrow").forEach(r=>r.querySelectorAll("button").forEach(b=>b.onclick=async()=>{const inp=r.querySelector("input");if(b.dataset.a==="good")inp.value="好！";
-    b.disabled=true;const {error}=await SB.rpc("teacher_note_writing",{p_id:+r.dataset.id,p_note:inp.value});b.disabled=false;
+    b.disabled=true;const {error}=await SB.rpc("leader_note_writing",{p_id:+r.dataset.id,p_note:inp.value});b.disabled=false;
     if(error){alert(errText(error));return}const w=WR.find(x=>x.id===+r.dataset.id);if(w)w.note=inp.value;b.textContent="已保存";setTimeout(()=>b.textContent=b.dataset.a==="good"?"👍 好":"保存",1200)}))}
 
 /* ---------- 作业检查 ---------- */
@@ -316,13 +361,13 @@ const WK="日一二三四五六";
 function dayLabel(k){const d=new Date(k+"T12:00:00"),t=ymd(new Date()),y=ymd(new Date(Date.now()-864e5));return (k===t?"今天":k===y?"昨天":(d.getMonth()+1)+"月"+d.getDate()+"日")+" · 周"+WK[d.getDay()]}
 function shiftDay(k,n){const d=new Date(k+"T12:00:00");d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 let DAY=ymd(new Date()),DAYROWS=[];
-let GOAL=(()=>{try{return +localStorage.getItem("xb-teacher-goal")||15}catch(e){return 15}})();
+let GOAL=(()=>{try{return +localStorage.getItem("xb-leader-goal")||15}catch(e){return 15}})();
 $("#goalMin").value=GOAL;
-$("#goalMin").onchange=()=>{GOAL=Math.min(180,Math.max(1,Math.round(+$("#goalMin").value||15)));$("#goalMin").value=GOAL;try{localStorage.setItem("xb-teacher-goal",GOAL)}catch(e){}drawDay()};
+$("#goalMin").onchange=()=>{GOAL=Math.min(180,Math.max(1,Math.round(+$("#goalMin").value||15)));$("#goalMin").value=GOAL;try{localStorage.setItem("xb-leader-goal",GOAL)}catch(e){}drawDay()};
 $("#dPick").onchange=()=>{if($("#dPick").value){DAY=$("#dPick").value;loadDay()}};
 $("#dPrev").onclick=()=>{DAY=shiftDay(DAY,-1);loadDay()};$("#dNext").onclick=()=>{DAY=shiftDay(DAY,1);loadDay()};$("#dToday").onclick=()=>{DAY=ymd(new Date());loadDay()};
 async function loadDay(){const today=ymd(new Date());if(DAY>today)DAY=today;$("#dPick").value=DAY;$("#dPick").max=today;$("#dNext").disabled=DAY>=today;
-  const want=DAY,cid=CID;const [{data,error},hw]=await Promise.all([SB.rpc("teacher_day",{p_class:CID,p_day:DAY}),SB.rpc("teacher_hw_day",{p_class:CID,p_day:DAY})]);if(want!==DAY||cid!==CID)return;
+  const want=DAY,cid=CID;const [{data,error},hw]=await Promise.all([SB.rpc("leader_day",{p_group:CID,p_day:DAY}),SB.rpc("leader_hw_day",{p_group:CID,p_day:DAY})]);if(want!==DAY||cid!==CID)return;
   if(error){$("#appMsg").textContent=errText(error);return}const H=new Map((hw.data||[]).map(x=>[x.id,x]));DAYROWS=(data||[]).map(r=>({...r,hw:H.get(r.id)||{}}));drawDay()}
 function lvCell(r){const h=r.hw||{},daily=(HW[CID]||{}).daily||0;if(h.target==null&&!daily)return '<span class="hint">—</span>';
   const n=h.new||0,t=h.target!=null?h.target:daily;return `<span class="pill ${t&&n>=t?"on":n?"mid":"none"}">${n} / ${t}</span>`}
@@ -338,7 +383,7 @@ function timeBar(sec){const m=sec/60,max=Math.max(GOAL*2,60);return `<div class=
 const PILL=[['none','没练'],['mid',''],['on','完成']];
 function statePill(r){const st=hwState(r);if(st===1){const left=Math.max(1,Math.ceil(GOAL-r.sec/60));return `<span class="pill mid">差 ${left} 分钟</span>`}return `<span class="pill ${PILL[st][0]}">${st===2?"✓ 完成":"没练"}</span>`}
 function drawDay(){const t=$("#hwTbl"),sum=$("#hwSum");
-  if(!DAYROWS.length){sum.innerHTML="";t.innerHTML=`<tbody><tr><td class="empty">这个班还没有学生。</td></tr></tbody>`;return}
+  if(!DAYROWS.length){sum.innerHTML="";t.innerHTML=`<tbody><tr><td class="empty">这个小组还没有组员。</td></tr></tbody>`;return}
   const by=[[],[],[]];DAYROWS.forEach(r=>by[hwState(r)].push(r));
   const nm=a=>a.map(r=>esc(r.name)).join("、");
   sum.innerHTML=`<b style="font-family:var(--f-head);font-size:18px;margin-right:4px">${dayLabel(DAY)}</b>
@@ -347,7 +392,7 @@ function drawDay(){const t=$("#hwTbl"),sum=$("#hwSum");
     (by[1].length?`<div class="names" style="flex-basis:100%">不够：${nm(by[1])}</div>`:"")+(by[0].length?`<div class="names" style="flex-basis:100%">没练：${nm(by[0])}</div>`:"");
   const cm=$("#copyMiss");if(cm)cm.onclick=()=>{const txt=`${clsName()} ${dayLabel(DAY).split(" · ")[0]}经文闯关作业（每天至少 ${GOAL} 分钟）\n`+(by[1].length?"还差一点："+by[1].map(r=>r.name+"（练了 "+Math.round(r.sec/60)+" 分钟）").join("、")+"\n":"")+(by[0].length?"还没练："+by[0].map(r=>r.name).join("、"):"");
     navigator.clipboard.writeText(txt.trim()).then(()=>{cm.textContent="已复制";setTimeout(()=>cm.textContent="复制未完成名单",1500)},()=>prompt("复制下面的文字",txt))};
-  t.innerHTML=`<thead><tr><th>学生</th><th>作业</th><th title="今天在作业经文包里新过的关卡 / 当天要求">新关卡</th><th title="当天的温习摸底成绩；待温习＝还没补完的错题关卡">摸底</th><th>练习时长</th><th>练习时间段</th><th>过关</th><th>练了哪些经文</th><th>测验得分</th></tr></thead><tbody>`+
+  t.innerHTML=`<thead><tr><th>组员</th><th>作业</th><th title="今天在作业经文包里新过的关卡 / 当天要求">新关卡</th><th title="当天的温习摸底成绩；待温习＝还没补完的错题关卡">摸底</th><th>练习时长</th><th>练习时间段</th><th>过关</th><th>练了哪些经文</th><th>测验得分</th></tr></thead><tbody>`+
     DAYROWS.map(r=>`<tr data-id="${r.id}">
       <td class="who"><b>${esc(r.name)}</b><small>${esc(r.username)}</small></td>
       <td>${statePill(r)}</td>
@@ -361,14 +406,14 @@ function drawDay(){const t=$("#hwTbl"),sum=$("#hwSum");
   t.querySelectorAll("tbody tr[data-id]").forEach(tr=>tr.onclick=()=>openDetail(+tr.dataset.id))}
 
 /* ---------- 学习情况 ---------- */
-async function loadOverview(){const {data,error}=await SB.rpc("teacher_overview",{p_class:CID});if(error){$("#appMsg").textContent=errText(error);return}
+async function loadOverview(){const {data,error}=await SB.rpc("leader_overview",{p_group:CID});if(error){$("#appMsg").textContent=errText(error);return}
   $("#appMsg").textContent="";ROWS=data||[];drawTiles();drawTable();drawAcct()}
 function drawTiles(){const n=ROWS.length,today=ROWS.filter(r=>r.today_sec>0).length,week=n?ROWS.reduce((a,r)=>a+r.week_sec,0)/n:0,passed=n?ROWS.reduce((a,r)=>a+r.passed,0)/n:0,tested=ROWS.filter(r=>r.tests>0);
   const avgBest=tested.length?Math.round(tested.reduce((a,r)=>a+r.best_score,0)/tested.length):0;
-  $("#tiles").innerHTML=[[n+" 人","学生人数"],[today+" 人","今天来练习"],[dur(Math.round(week)),"近 7 天人均练习"],[passed.toFixed(1)+" 关","人均过关"]].map(([b,s])=>`<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("")}
-const COLS=[["username","学生"],["last_seen","状态"],["today_sec","今天"],["week_sec","近 7 天"],["total_sec","累计"],["passed","过关"],["adv","默写过关"],["best_score","测验最高"],["last_score","最近一次"],["tests","测验次数"]];
+  $("#tiles").innerHTML=[[n+" 人","组员人数"],[today+" 人","今天来练习"],[dur(Math.round(week)),"近 7 天人均练习"],[passed.toFixed(1)+" 关","人均过关"]].map(([b,s])=>`<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("")}
+const COLS=[["username","组员"],["last_seen","状态"],["today_sec","今天"],["week_sec","近 7 天"],["total_sec","累计"],["passed","过关"],["adv","默写过关"],["best_score","测验最高"],["last_score","最近一次"],["tests","测验次数"]];
 function drawTable(){const t=$("#tbl");
-  if(!ROWS.length){t.innerHTML=`<tbody><tr><td class="empty">这个班还没有学生。点上方“学生账号与密码”添加。</td></tr></tbody>`;return}
+  if(!ROWS.length){t.innerHTML=`<tbody><tr><td class="empty">这个小组还没有组员。点上方“组员账号与密码”添加。</td></tr></tbody>`;return}
   const rs=ROWS.slice().sort((a,b)=>{const k=SORT.k;let x=a[k],y=b[k];if(k==="last_seen"){x=x?+new Date(x):0;y=y?+new Date(y):0}return (x>y?1:x<y?-1:0)*SORT.d});
   const maxW=Math.max(1,...ROWS.map(r=>r.week_sec)),maxP=Math.max(1,...ROWS.map(r=>r.passed)),maxS=Math.max(1,...ROWS.map(r=>r.best_score));
   t.innerHTML=`<thead><tr>${COLS.map(([k,l])=>`<th class="sort" data-k="${k}">${l}<span class="arr">${SORT.k===k?(SORT.d>0?"↑":"↓"):""}</span></th>`).join("")}</tr></thead><tbody>`+
@@ -386,16 +431,16 @@ function drawTable(){const t=$("#tbl");
   t.querySelectorAll("th.sort").forEach(th=>th.onclick=()=>{const k=th.dataset.k;SORT=SORT.k===k?{k,d:-SORT.d}:{k,d:k==="username"?1:-1};drawTable()});
   t.querySelectorAll("tbody tr[data-id]").forEach(tr=>tr.onclick=()=>openDetail(+tr.dataset.id))}
 
-/* ---------- 学生详情 ---------- */
+/* ---------- 组员详情 ---------- */
 async function openDetail(id){let r=ROWS.find(x=>x.id===id);if(!r){await loadOverview();r=ROWS.find(x=>x.id===id);if(!r)return}const box=$("#detail");box.hidden=false;box.innerHTML=`<p class="hint">正在载入 ${esc(r.name)} 的数据……</p>`;
-  const {data,error}=await SB.rpc("teacher_student_detail",{p_student:id});if(error){box.innerHTML=`<p class="msg err">${esc(errText(error))}</p>`;return}
+  const {data,error}=await SB.rpc("leader_user_detail",{p_user:id});if(error){box.innerHTML=`<p class="msg err">${esc(errText(error))}</p>`;return}
   box.innerHTML=`<div class="dhead"><h3>${esc(r.name)}<small class="hint" style="font-family:var(--f-body);font-weight:400;margin-left:8px">账号 ${esc(r.username)} · ${ago(r.last_seen)}</small></h3><button class="btn ghost small" id="dClose">收起</button></div>
     <div class="tiles"><div class="tile"><b>${dur(r.week_sec)}</b><span>近 7 天练习</span></div><div class="tile"><b>${dur(r.total_sec)}</b><span>累计练习</span></div><div class="tile"><b>${r.passed} 关</b><span>已过关${r.adv?"（默写 "+r.adv+" 关）":""}</span></div><div class="tile"><b>${r.tests?r.best_score+" 分":"—"}</b><span>测验最高分 · 共 ${r.tests} 次</span></div></div>
     <div><h4 style="margin:0 0 8px;font-size:14px;color:#6b4a1f">最近一周每天的记录</h4><div class="tablewrap" id="dDays"><p class="hint">载入中……</p></div></div>
     <div class="charts"><div class="chart"><h4>近 30 天每天练习时长（分钟）</h4>${usageChart(data.usage,data.today)}</div><div class="chart"><h4>最近 ${data.tests.length} 次测验得分</h4>${testChart(data.tests)}</div></div>
     <div><h4 style="margin:0 0 8px;font-size:14px;color:#6b4a1f">闯关进度</h4>${progressGrid(data.progress)}</div>`;
   $("#dClose").onclick=()=>{box.hidden=true};box.scrollIntoView({behavior:"smooth",block:"start"});
-  const dd=await SB.rpc("teacher_student_days",{p_student:id,p_days:7});const el=$("#dDays");if(!el)return;
+  const dd=await SB.rpc("leader_user_days",{p_user:id,p_days:7});const el=$("#dDays");if(!el)return;
   if(dd.error){el.innerHTML=`<p class="msg err">${esc(errText(dd.error))}</p>`;return}
   el.innerHTML=`<table class="days"><thead><tr><th>日期</th><th>作业</th><th>练习时长</th><th>时间段</th><th>过关</th><th>练了哪些经文</th><th>测验</th></tr></thead><tbody>`+
     (dd.data||[]).map(x=>{const r={sec:x.sec,plays:x.plays,tests:x.tests};return `<tr><td class="dd"><b>${dayLabel(x.d)}</b></td><td>${statePill(r)}</td><td>${timeBar(x.sec)}</td><td>${x.first?hm(x.first)+"–"+hm(x.last):'<span class="hint">—</span>'}</td><td>${x.plays.length?x.plays.length+" 遍":'<span class="hint">—</span>'}</td><td class="verses">${verseChips(x.plays)}</td><td>${testCell(x.tests)}</td></tr>`}).join("")+`</tbody></table>`}
@@ -427,46 +472,42 @@ function progressGrid(progress){if(!progress.length)return `<p class="hint">还�
     order.map(ab=>{const list=groups[ab].sort((a,b)=>key(a.k)-key(b.k));const s3=list.filter(p=>p.s===3).length;
       return `<div class="book"><h4>${esc(BOOKS[ab]||(NONESV.has(ab)?ab+" · 英文":/^[\u4e00-\u9fff]/.test(ab)?ab:ab+" · ESV 英文"))}<small>${list.length} 关 · 三星 ${s3} 关</small></h4><div class="cells">${list.map(p=>{const lab=p.k.slice(ab.length+1).replace(/#(\d+)/,(m,n)=>"·"+(+n+1));return `<span class="cell s${p.s}${p.a?" adv":""}" title="${esc(p.k)}：${p.s} 星${p.a?"，默写 "+p.a+" 星":""}">${esc(lab)}</span>`}).join("")}</div></div>`}).join("")+`</div>`}
 
-/* ---------- 学生账号 ---------- */
+/* ---------- 组员账号 ---------- */
 let ACCTS=[];
-const SITE=()=>location.href.replace(/teacher\.html.*$/,"");
+const SITE=()=>location.href.replace(/leader\.html.*$/,"");
 const clsName=()=>(CLASSES.find(c=>c.id===CID)||{}).name||"";
-async function loadAccounts(){const {data,error}=await SB.rpc("teacher_accounts",{p_class:CID});if(error){$("#appMsg").textContent=errText(error);return}ACCTS=data||[];drawAcct()}
+async function loadAccounts(){const {data,error}=await SB.rpc("leader_accounts",{p_group:CID});if(error){$("#appMsg").textContent=errText(error);return}ACCTS=data||[];drawAcct()}
 function reloadAll(){loadOverview();loadAccounts()}
-$("#addGo").onclick=async()=>{const names=$("#names").value.split(/[\n,，、]+/).map(s=>s.trim()).filter(Boolean),m=$("#addMsg");
-  if(!names.length){m.className="msg err";m.textContent="请先写学生名字。";return}
-  if(names.length>80){m.className="msg err";m.textContent="一次最多 80 个。";return}
-  $("#addGo").disabled=true;const {data,error}=await SB.rpc("teacher_add_students",{p_class:CID,p_names:names});$("#addGo").disabled=false;
+$("#addGo").onclick=async()=>{const names=$("#names").value.split(/[\n,，、]+/).map(s=>s.trim()).filter(Boolean),cnt=Math.round(+$("#addCount").value||0),m=$("#addMsg");
+  if(!names.length&&!(cnt>=1&&cnt<=100)){m.className="msg err";m.textContent="请填人数（1–100），或粘贴名字。";return}
+  if(names.length>100){m.className="msg err";m.textContent="一次最多 100 个。";return}
+  $("#addGo").disabled=true;const {data,error}=await SB.rpc("leader_add_users",names.length?{p_group:CID,p_names:names}:{p_group:CID,p_count:cnt});$("#addGo").disabled=false;
   if(error){m.className="msg err";m.textContent=errText(error);return}
-  m.className="msg ok";m.textContent=`已生成 ${(data||[]).length} 个账号，见下方名单。`;$("#names").value="";await loadAccounts();loadOverview();
-  $("#acctCard").scrollIntoView({behavior:"smooth",block:"start"})};
-$("#copyAll").onclick=async()=>{if(!ACCTS.length)return;const txt=`心版 · ${clsName()}\n游戏网址：${SITE()}\n\n`+ACCTS.map(r=>`${r.name}　账号：${r.username}　密码：${r.password||"（请重置）"}`).join("\n");
-  try{await navigator.clipboard.writeText(txt);$("#copyAll").textContent="已复制"}catch(e){prompt("复制下面的内容",txt)}setTimeout(()=>$("#copyAll").textContent="复制全班账号",1500)};
-$("#printAll").onclick=()=>{$("#printTitle").textContent=`心版 · ${clsName()} · 学生账号`;document.body.classList.add("printing");window.print();document.body.classList.remove("printing")};
-function drawAcct(){const t=$("#acctTbl");$("#siteLine").innerHTML=`学生在游戏网址 <b>${esc(SITE())}</b> 用下面的账号和密码登录。`;
-  if(!ACCTS.length){t.innerHTML=`<tbody><tr><td class="empty">还没有学生。在上面写名字，点“生成账号”。</td></tr></tbody>`;return}
-  t.innerHTML=`<thead><tr><th>姓名</th><th>账号</th><th>密码</th><th>最近上线</th><th class="ops"></th></tr></thead><tbody>`+ACCTS.map(r=>`<tr data-id="${r.id}" style="cursor:default">
-    <td><span class="nm">${esc(r.name)}</span></td><td class="pw">${esc(r.username)}</td><td class="pw">${r.password?esc(r.password):'<span class="hint">学生自设（忘了可点重置）</span>'}</td><td>${ago(r.last_seen)}</td>
-    <td class="ops"><div class="row" style="justify-content:flex-end"><button class="btn ghost small" data-op="pw">重置密码</button><button class="btn ghost small" data-op="rn">改名</button>${CLASSES.length>1?'<button class="btn ghost small" data-op="mv">移到班级</button>':""}<button class="btn ghost small" data-op="del">删除</button></div></td></tr>`).join("")+`</tbody>`;
+  const L=data||[];m.className="msg ok";m.textContent=`已生成 ${L.length} 个账号。`;$("#names").value="";$("#addCount").value="";
+  $("#newAccts").innerHTML=`<p class="tip">登录名：登录时用，只有你自己知道，建好后不能改</p><p class="tip">显示名：别人在榜单和小组里看到的名字，随时可以改</p>
+    <div class="tablewrap"><table><thead><tr><th>显示名</th><th>登录名</th><th>初始密码</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.name)}</td><td class="pw">${esc(r.username)}</td><td class="pw">${esc(r.password)}</td></tr>`).join("")}</tbody></table></div>`;
+  await loadAccounts();loadOverview()};
+$("#copyAll").onclick=async()=>{if(!ACCTS.length)return;const txt=`心版 · ${clsName()}\n游戏网址：${SITE()}\n\n`+ACCTS.map(r=>`${r.name}　登录名：${r.username}　密码：${r.password||"（请重置）"}`).join("\n");
+  try{await navigator.clipboard.writeText(txt);$("#copyAll").textContent="已复制"}catch(e){prompt("复制下面的内容",txt)}setTimeout(()=>$("#copyAll").textContent="复制全组账号",1500)};
+$("#printAll").onclick=()=>{$("#printTitle").textContent=`心版 · ${clsName()} · 组员账号`;document.body.classList.add("printing");window.print();document.body.classList.remove("printing")};
+function drawAcct(){const t=$("#acctTbl");$("#siteLine").innerHTML=`组员在游戏网址 <b>${esc(SITE())}</b> 用下面的账号和密码登录。`;
+  if(!ACCTS.length){t.innerHTML=`<tbody><tr><td class="empty">还没有组员。在上面写名字，点“生成账号”。</td></tr></tbody>`;return}
+  t.innerHTML=`<thead><tr><th>显示名</th><th>登录名</th><th>密码</th><th>最近上线</th><th class="ops"></th></tr></thead><tbody>`+ACCTS.map(r=>`<tr data-id="${r.id}" style="cursor:default">
+    <td><span class="nm">${esc(r.name)}</span></td><td class="pw">${esc(r.username)}</td><td class="pw">${r.password?esc(r.password):'<span class="hint">自己改过（忘了可点重置）</span>'}</td><td>${ago(r.last_seen)}</td>
+    <td class="ops"><div class="row" style="justify-content:flex-end">${r.is_leader?'<span class="hint">带领者，由主账号管理</span>':'<button class="btn ghost small" data-op="pw">重置密码</button><button class="btn ghost small" data-op="rn">改名</button>'}<button class="btn ghost small" data-op="out">移出小组</button></div></td></tr>`).join("")+`</tbody>`;
   t.querySelectorAll("button[data-op]").forEach(b=>b.onclick=()=>acctOp(+b.closest("tr").dataset.id,b.dataset.op,b))}
 async function acctOp(id,op,btn){const r=ACCTS.find(x=>x.id===id),cell=btn.closest("td");
-  if(op==="pw"){const {data,error}=await SB.rpc("teacher_reset_password",{p_student:id});if(error){$("#appMsg").textContent=errText(error);return}
+  if(op==="pw"){const {data,error}=await SB.rpc("leader_reset_password",{p_user:id});if(error){$("#appMsg").textContent=errText(error);return}
     await loadAccounts();const c=$(`#acctTbl tr[data-id="${id}"] .ops`);if(c)c.innerHTML=`<span class="msg ok">已重置，新密码 <b class="pw">${esc(data)}</b>，旧密码失效</span>`}
   if(op==="rn"){cell.innerHTML=`<form class="row" style="justify-content:flex-end;flex-wrap:nowrap"><input value="${esc(r.name)}" maxlength="20" style="width:140px"><button class="btn small">保存</button></form>`;
     const f=cell.querySelector("form");f.querySelector("input").focus();f.onsubmit=async e=>{e.preventDefault();const n=f.querySelector("input").value.trim();if(!n)return;
-      const {error}=await SB.rpc("teacher_rename_student",{p_student:id,p_name:n});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}
-  if(op==="mv"){const others=CLASSES.filter(c=>c.id!==CID);
-    cell.innerHTML=`<form class="row" style="justify-content:flex-end;flex-wrap:nowrap"><select style="width:auto">${others.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select><button class="btn small">移过去</button><button class="btn ghost small" type="button" data-n>取消</button></form>`;
-    const f=cell.querySelector("form");f.querySelector("[data-n]").onclick=()=>drawAcct();
-    f.onsubmit=async e=>{e.preventDefault();const to=+f.querySelector("select").value;
-      const {error}=await SB.rpc("teacher_move_student",{p_student:id,p_class:to});if(error){$("#appMsg").textContent=errText(error);return}
-      $("#addMsg").className="msg ok";$("#addMsg").textContent=`已把 ${r.name} 移到“${(CLASSES.find(c=>c.id===to)||{}).name||""}”，学习记录一起带过去。`;reloadAll()}}
-  if(op==="del"){cell.innerHTML=`<div class="row" style="justify-content:flex-end"><span class="danger-q">删除 ${esc(r.name)} 和全部学习记录？</span><button class="btn danger small" data-y>确定删除</button><button class="btn ghost small" data-n>取消</button></div>`;
+      const {error}=await SB.rpc("leader_rename_user",{p_user:id,p_name:n});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}
+  if(op==="out"){cell.innerHTML=`<div class="row" style="justify-content:flex-end"><span class="danger-q">把 ${esc(r.name)} 移出这个小组？账号和学习记录都保留。</span><button class="btn danger small" data-y>移出</button><button class="btn ghost small" data-n>取消</button></div>`;
     cell.querySelector("[data-n]").onclick=()=>drawAcct();
-    cell.querySelector("[data-y]").onclick=async()=>{const {error}=await SB.rpc("teacher_delete_student",{p_student:id});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}}
+    cell.querySelector("[data-y]").onclick=async()=>{const {error}=await SB.rpc("leader_remove_member",{p_group:CID,p_user:id});if(error){$("#appMsg").textContent=errText(error);return}reloadAll()}}}
 
-(async()=>{if(KEY){$("#loginBox").hidden=true;$("#app").hidden=false;$("#logout").hidden=false;$("#logout").textContent="在这台设备上退出";$("#me").textContent="老师专属链接";loadClasses();return}
-  const {data}=await SB.auth.getSession();if(!data.session){$("#loginBox").hidden=false}})();
+(async()=>{if(!TOK&&!KEY){$("#loginBox").hidden=false;return}
+  const r=await SB.rpc("leader_me");if(r.error){signedOut(r.error.message==="SESSION_EXPIRED"?"登录已过期，请重新登录。":errText(r.error));return}signedIn(r.data)})();
 </script>
 </body>
 </html>
