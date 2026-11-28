@@ -1634,7 +1634,7 @@ function hwKey(pack){const t=PN(pack||"").trim();if(!t)return null;if(GROUPS[t])
 /* 作业：在几个小组都有作业时逐个完成；hwState() 给出第一个没完成的（都完成了就给第一个） */
 function hwStates(){if(!ACC.tok||isAdmin())return [];return (TD.hw||[]).map(w=>{const k=w.daily>0?hwKey(w.pack):null;if(!k)return null;
   const U=unitsOf(packList(k)),first=new Set(TD.first),done=U.filter(u=>first.has(u.key)).length,left=U.filter(u=>!MEM[u.key]||first.has(u.key)).length,
-    target=Math.min(w.daily,left);return {k,group:w.group,daily:w.daily,title:packTitle(k),done,target,ok:done>=target}}).filter(Boolean)}
+    target=Math.min(w.daily,left);return {k,raw:w.pack,group:w.group,daily:w.daily,title:packTitle(k),done,target,ok:done>=target}}).filter(Boolean)}
 function hwState(){const L=hwStates();return L.find(h=>!h.ok)||L[0]||null}
 const inHwPack=()=>{const h=hwState();return !h||(PACK.kind===h.k.kind&&PACK.key===h.k.key)};
 function hwBlock(what){tdRoll();const h=hwState();if(!h||h.ok)return false;if(what!=="all"&&inHwPack())return false;
@@ -1645,10 +1645,11 @@ function hwBlock(what){tdRoll();const h=hwState();if(!h||h.ok)return false;if(wh
 function drawHwBar(){const b=$("#hwBar");tdRoll();const h=hwState();if(!h){b.hidden=true;return}b.hidden=false;b.classList.toggle("done",h.ok);
   b.innerHTML=`<span class="t">${h.ok?"✓ 今日作业完成":"今日作业"}</span><span class="pb"><i style="width:${h.target?Math.min(100,h.done/h.target*100):100}%"></i></span><span class="n">${h.done} / ${h.target} 关</span>
     ${h.ok?"":`<button class="btn" id="hwBarGo" type="button" style="padding:8px 16px;font-size:14px">去做作业</button>`}<span class="sub"></span>`;
-  const L=hwStates(),more=L.filter(x=>!x.ok).length-(h.ok?0:1),who=L.length>1?`${h.group} · `:"";
-  b.querySelector(".sub").textContent=h.ok?`${who}${h.title}：今天的新关卡完成了，其他经文包也打开了。`:`${who}${h.title}：每天要过 ${h.daily} 个新关卡。完成前，其他经文包、对战和词汇先锁住。`+(more>0?`做完还有 ${more} 个小组的作业。`:"");
+  const L=hwStates(),more=0,who=L.length>1?`${h.group} · `:"";
+  b.querySelector(".sub").textContent=h.ok?`${who}${h.title}：今天的新关卡完成了，其他经文包也打开了。`:`${who}${h.title}：每天要过 ${h.daily} 个新关卡。完成前，其他经文包、对战和词汇先锁住。`;
+  if(L.length>1){const ls=document.createElement("span");ls.className="sub hwlist";ls.textContent=L.map(x=>`${x.ok?"✓":"○"} ${x.group} · ${x.title} ${x.done}/${x.target}`).join("　");b.appendChild(ls)}
   const g=$("#hwBarGo");if(g)g.onclick=async()=>{setPack(h.k);renderHome();if(await needEn(LIB))goMap()}}
-function hwReport(){if(!ACC.tok)return;for(const h of hwStates())rpc("user_hw_report",{p_token:ACC.tok,p_pack:h.title,p_new:h.done,p_target:h.target}).catch(()=>{})}
+function hwReport(){if(!ACC.tok)return;for(const h of hwStates())rpc("user_hw_report",{p_token:ACC.tok,p_pack:h.raw,p_new:h.done,p_target:h.target}).catch(()=>{})}
 const pendingHere=()=>isAdmin()?[]:UNITS.filter(u=>TD.pending.includes(u.key));
 
 /* 摸底：每天第一次进闯关；从这个经文包已过的关卡里出打字填空 */
@@ -1854,7 +1855,9 @@ async function renderBoard(){
     if(!LB.pack){list.innerHTML=`<div class="lbempty"><p class="hint">还没有人考过 60 秒测试。第一名就是你！</p></div>`;return}
     $("#boardHint").textContent=(LB.pack===LB.hw?`这是小组布置的作业：“${LB.pack}”的 60 秒测试最高分。`:LB.hw?`“${LB.pack}”是自由练习榜，不算作业（作业是“${LB.hw}”）。`:`“${LB.pack}”的 60 秒测试最高分。`)+"每个经文包分开排。"+(per==="day"?"今日从零点算起。":per==="week"?"本周从周一算起。":"")}
   let d;try{d=await rpc("leaderboard",{p_token:ACC.tok,p_kind:LB.kind,p_period:per,p_scope:LB.scope,p_group:LB.scope==="group"?LB.group:null,p_pack:LB.kind==="test"?LB.pack:null})}
-  catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}list.innerHTML=`<p class="msg err" style="text-align:center">连不上网络，请稍后点“刷新”。</p>`;return}
+  catch(e){if(my!==LB.seq)return;if(e.code==="SESSION_EXPIRED"){sessionGone();return}
+    if(e.code==="NOT_MEMBER"){LB.scope="all";accSync();list.innerHTML=`<p class="msg err" style="text-align:center">你已经不在这个小组了。</p>`;return}
+    list.innerHTML=`<p class="msg err" style="text-align:center">连不上网络，请稍后点“刷新”。</p>`;return}
   if(my!==LB.seq)return;
   const rows=d.rows||[],U=K.unit;
   if(d.me){const above=rows.filter(r=>r.rank<d.me.rank).slice(-1)[0];
@@ -1868,7 +1871,7 @@ async function renderBoard(){
     pod.querySelectorAll(".pd").forEach((el,i)=>{el.querySelector(".pn").textContent=order[i].name+(order[i].hidden?"（已隐藏）":"");el.querySelector(".pc").textContent=order[i].cls})}
   const L=top.length===3?rest:rows;list.classList.toggle("afterpod",top.length===3);
   list.innerHTML=L.map(r=>`<div class="brow${r.me?" me":""}"><span class="rk">${r.rank}</span><span class="nm"><span class="n"></span><span class="cl"></span></span><span class="vv"></span><span class="sc">${r.val} ${U}</span></div>`).join("");
-  list.querySelectorAll(".brow").forEach((el,i)=>{el.querySelector(".n").textContent=L[i].name;el.querySelector(".cl").textContent=L[i].cls})}
+  list.querySelectorAll(".brow").forEach((el,i)=>{el.querySelector(".n").textContent=L[i].name+(L[i].hidden?"（已隐藏）":"");el.querySelector(".cl").textContent=L[i].cls})}
 $("#bKinds").querySelectorAll("button").forEach(b=>b.onclick=()=>{LB.kind=b.dataset.k;renderBoard()});
 $("#bScope").querySelectorAll("button").forEach(b=>b.onclick=()=>{LB.scope=b.dataset.v;renderBoard()});
 $("#bGroup").onchange=e=>{LB.group=Number(e.target.value);renderBoard()};
@@ -1920,6 +1923,7 @@ function setAccMode(m){accMode=m;const up=m==="up";
   $("#accTabIn").setAttribute("aria-pressed",!up);$("#accTabUp").setAttribute("aria-pressed",up);
   $("#accRib").textContent=up?"注　册":"登　录";$("#accGo").textContent=up?"注册并开始":"登录";
   $("#accUpFlds").hidden=$("#accUpFlds2").hidden=!up;
+  if(up&&!$("#accName").value){const nk=($("#nick")||{}).value;if(nk)$("#accName").value=nk.trim().slice(0,20)}
   $("#accTip").innerHTML=up?"自己起一个登录名和密码。<br>登录名用小写字母和数字，2–24 位。":"用你的登录名和密码登录，<br>进度、练习时长和测验成绩会保存下来。";
   $("#accUser").placeholder=up?"例如 grace2013":"例如 g8grace";$("#accUser").autocomplete="username";
   $("#accPw").placeholder=up?"至少 6 位":"输入密码";$("#accPw").autocomplete=up?"new-password":"current-password";
@@ -1927,7 +1931,7 @@ function setAccMode(m){accMode=m;const up=m==="up";
 $("#accTabIn").onclick=()=>setAccMode("in");$("#accTabUp").onclick=()=>setAccMode("up");
 const REG_ERR={BAD_NAME:"请写上显示名（20 个字以内）。",BAD_USERNAME:"登录名只能用小写字母和数字，2–24 位。",
   BAD_PASSWORD:"密码要 6–40 位。",BAD_EMAIL:"邮箱格式不对。",EMAIL_TAKEN:"这个邮箱已经被别的账号用了。",
-  USERNAME_TAKEN:"这个登录名已经有人用了，换一个吧。",TOO_MANY:"注册太频繁了，请过一会儿再试。"};
+  USERNAME_TAKEN:"这个登录名已经有人用了，换一个吧。",RESERVED_USERNAME:"“两个字母＋数字”（如 km12）留给小组批量建的账号，请换一个，比如在后面加几个字母。",TOO_MANY:"注册太频繁了，请过一会儿再试。"};
 async function accDone(d){const me=d.me||{};if(ACC.user&&ACC.user!==me.username)resetLocal();
   Object.assign(ACC,{tok:d.token,name:me.name,user:me.username,me,guest:false});accSave();
   $("#accBox").hidden=true;$("#accPw").value="";$("#accPw2").value="";drawAcc();toast(`欢迎，${me.name}`);
@@ -1935,6 +1939,7 @@ async function accDone(d){const me=d.me||{};if(ACC.user&&ACC.user!==me.username)
 $("#accForm").onsubmit=async e=>{e.preventDefault();const u=$("#accUser").value.replace(/\s+/g,"").toLowerCase(),p=$("#accPw").value.trim(),m=$("#accMsg");
   if(accMode==="up"){const n=$("#accName").value.trim(),p2=$("#accPw2").value.trim(),em=$("#accEmail").value.trim();
     if(!/^[a-z0-9]{2,24}$/.test(u)){m.textContent=REG_ERR.BAD_USERNAME;return}
+    if(/^[a-z]{2}[0-9]{2,3}$/.test(u)){m.textContent=REG_ERR.RESERVED_USERNAME;return}
     if(!n){m.textContent=REG_ERR.BAD_NAME;return}
     if(p.length<6){m.textContent=REG_ERR.BAD_PASSWORD;return}
     if(p!==p2){m.textContent="两次输入的密码不一样。";return}
@@ -1944,7 +1949,7 @@ $("#accForm").onsubmit=async e=>{e.preventDefault();const u=$("#accUser").value.
     $("#accGo").disabled=false;return}
   if(!u||!p){m.textContent="请输入登录名和密码。";return}
   $("#accGo").disabled=true;m.textContent="";
-  try{await accDone(await rpc("user_login",{p_username:u,p_password:p}))}
+  try{const d=await rpc("user_login",{p_username:u,p_password:p});if(d&&d.error){const er=new Error(d.error);er.code=d.error;throw er}await accDone(d)}
   catch(err){m.textContent=err.code==="BAD_LOGIN"?"登录名或密码不对，请再试一次。":err.code==="LOCKED"?"密码输错太多次，请 10 分钟后再试。":"连不上网络，请稍后再试。"}
   $("#accGo").disabled=false};
 /* ===== 我的 ===== */

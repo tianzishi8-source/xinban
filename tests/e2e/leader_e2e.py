@@ -11,14 +11,14 @@ def check(c, msg):
     print(("ok   " if c else "FAIL ") + msg)
     if not c: fails.append(msg)
 
-def fixtures(admin, leader=True):
+def fixtures(admin, leader=True, bad_login=False):
     me = {"id": 9, "username": "zzlead", "name": "带领者甲", "is_leader": leader, "is_admin": admin, "pw_is_initial": False, "show_on_board": True, "email": None}
     G = [{"id": 1, "name": "G7", "prefix": "km", "invite_code": "ABCDEF", "hw_pack": None, "hw_daily": 0, "members": 2, "leader_id": 9, "leader_name": "带领者甲", "created_at": "2026-11-01"}]
     acc = [{"id": 11, "name": "甲", "username": "km01", "password": "123456", "last_seen": None, "is_leader": False},
            {"id": 12, "name": "乙", "username": "km02", "password": "", "last_seen": None, "is_leader": False}]
     ov = [{"id": 11, "name": "甲", "username": "km01", "today_sec": 60, "week_sec": 60, "total_sec": 60, "passed": 1, "stars": 3, "adv": 0, "tests": 1, "best_score": 100, "last_score": 100, "last_seen": None}]
     return {
-        "user_login": {"token": "T", "me": me},
+        "user_login": {"error": "BAD_LOGIN"} if bad_login else {"token": "T", "me": me},
         "leader_me": me if (leader or admin) else {"__error": "NOT_LEADER"},
         "leader_groups": G, "leader_accounts": acc, "leader_overview": ov, "leader_day": [], "leader_hw_day": [], "leader_writings": [],
         "leader_regen_code": "GHJKLM", "leader_reset_password": "654321", "leader_set_homework": None, "leader_rename_user": None, "leader_remove_member": None,
@@ -29,13 +29,13 @@ def fixtures(admin, leader=True):
         "admin_set_leader": None, "admin_add_member": None, "admin_transfer_group": None,
     }
 
-async def run(p, admin, leader=True):
+async def run(p, admin, leader=True, bad_login=False, key=None):
     calls = []
     b = await p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
     pg = await (await b.new_context(viewport={"width": 1100, "height": 900})).new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.on("dialog", lambda d: asyncio.ensure_future(d.accept()))
-    F = fixtures(admin, leader)
+    F = fixtures(admin, leader, bad_login)
     async def handle(route):
         fn = route.request.url.rsplit("/", 1)[-1]; body = json.loads(route.request.post_data or "{}"); calls.append((fn, body))
         v = F.get(fn, None)
@@ -43,7 +43,8 @@ async def run(p, admin, leader=True):
             await route.fulfill(status=400, content_type="application/json", body=json.dumps({"message": v["__error"]})); return
         await route.fulfill(status=200, content_type="application/json", body=json.dumps(v))
     await pg.route("**/rest/v1/rpc/*", handle)
-    await pg.goto(URL); await pg.wait_for_timeout(800)
+    await pg.goto(URL + (f"#k={key}" if key else "")); await pg.wait_for_timeout(800)
+    if key: await pg.wait_for_timeout(800); return b, pg, calls, errs
     await pg.fill("#user", "zzlead"); await pg.fill("#pass", "123456"); await pg.click("#authGo"); await pg.wait_for_timeout(1200)
     return b, pg, calls, errs
 
@@ -84,7 +85,18 @@ async def main():
         await pg.click('#usersTbl tr[data-id="11"] [data-op="lead"]'); await pg.wait_for_timeout(500)
         check(any(c[0] == "admin_set_leader" and c[1] == {"p_token": "T", "p_user": 11, "p_on": True} for c in calls), "可以指定带领者")
         check(errs == [], f"主账号页面没有报错 {errs[:2]}")
+        # 把当前小组交给带领者（km01 不是带领者，所以用 fixture 里把他改成带领者再画一次）
+        await pg.evaluate("USERS[1].is_leader=true;drawUsers()")
+        await pg.click('#usersTbl tr[data-id="11"] [data-op="give"]'); await pg.wait_for_timeout(500)
+        check(any(c[0] == "admin_transfer_group" and c[1].get("p_group") == 1 and c[1].get("p_leader") == 11 for c in calls), "主账号可以把小组交给带领者")
         all_calls += calls; await b.close()
+        # 登录失败用 {error} 返回时也能提示
+        b, pg, calls, errs = await run(p, admin=False, bad_login=True)
+        check("登录名或密码不对" in await pg.inner_text("#authMsg"), "登录名或密码不对时有提示")
+        await b.close()
+        # 专属链接（没有登录凭证）：主账号也看不到“全部用户”，不会被踢出
+        b, pg, calls, errs = await run(p, admin=True, key="k" * 24)
+        check(await pg.locator("#app").is_visible() and await pg.locator("#vUsers").is_hidden(), "专属链接打开时不显示“全部用户”")
         # 每个调用都和真实函数签名一致
         bad = [(f, sorted(set(a) - SIGS.get(f, set()))) for f, a in all_calls if f not in SIGS or set(a) - SIGS[f]]
         check(not bad, f"所有调用的函数名和参数名都存在于数据库 {bad[:4]}")

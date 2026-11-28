@@ -2,21 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { db, rpc, one } from "./harness.mjs";
 const MIG = "migrations_2026-11-28_users_groups.sql";
-const login = async (pg, u, p = "123456") => (await rpc(pg, "user_login", { p_username: u, p_password: p })).token;
+const login = async (pg, u, p = "123456") => { const r = await rpc(pg, "user_login", { p_username: u, p_password: p }); if (r.error) throw new Error(r.error); return r.token; };
 const reg = (pg, u, name = u, pw = "abcdef", email = null) => rpc(pg, "user_register", { p_username: u, p_name: name, p_password: pw, p_email: email });
 
 test("注册：登录名重复、密码太短报错；邮箱可空；返回 me", async () => {
-  const pg = await db({ migrate: [MIG] });
+  const pg = await db({ migrate: [MIG, "migrations_2026-11-28b_security_fix.sql"] });
   const r = await reg(pg, "zzalice", "爱丽丝");
   assert.ok(r.token); assert.equal(r.me.name, "爱丽丝"); assert.equal(r.me.email, null); assert.equal(r.me.is_admin, false);
   await assert.rejects(reg(pg, "zzalice"), /USERNAME_TAKEN/);
   await assert.rejects(reg(pg, "zzbob", "b", "12345"), /BAD_PASSWORD/);
   await assert.rejects(reg(pg, "zzbob", "b", "123456", "not-an-email"), /BAD_EMAIL/);
-  assert.equal((await reg(pg, "km99", "可以用前缀格式")).me.username, "km99");
+  await assert.rejects(reg(pg, "km99", "前缀格式留给批量建账号"), /RESERVED_USERNAME/);
 });
 
 test("改资料、改密码：旧密码失效，初始密码明文被清空", async () => {
-  const pg = await db({ migrate: [MIG] });
+  const pg = await db({ migrate: [MIG, "migrations_2026-11-28b_security_fix.sql"] });
   const t = await login(pg, "km01");
   assert.equal((await rpc(pg, "user_sync", { p_token: t })).me.pw_is_initial, true);
   const me = await rpc(pg, "user_update_profile", { p_token: t, p_name: "新名字", p_email: "a@b.cn", p_show_on_board: false });
@@ -29,7 +29,7 @@ test("改资料、改密码：旧密码失效，初始密码明文被清空", as
 });
 
 test("小组：邀请码加入、错误码、重复加入、退出", async () => {
-  const pg = await db({ migrate: [MIG] });
+  const pg = await db({ migrate: [MIG, "migrations_2026-11-28b_security_fix.sql"] });
   const t = (await reg(pg, "zzcarl")).token;
   const g = await one(pg, "select id, invite_code from public.groups where name='G7'");
   await assert.rejects(rpc(pg, "user_join_group", { p_token: t, p_code: "ZZZZZZ" }), /BAD_CODE/);
@@ -41,7 +41,7 @@ test("小组：邀请码加入、错误码、重复加入、退出", async () =>
 });
 
 test("总榜隐私：隐藏的人对别人不可见，对本人可见，主账号可见并标 hidden", async () => {
-  const pg = await db({ migrate: [MIG] });
+  const pg = await db({ migrate: [MIG, "migrations_2026-11-28b_security_fix.sql"] });
   const a = await login(pg, "km01"), b = await login(pg, "pq01"), adm = await login(pg, "teacher");
   await rpc(pg, "user_update_profile", { p_token: a, p_show_on_board: false });
   const names = r => r.rows.map(x => x.name);
@@ -53,7 +53,7 @@ test("总榜隐私：隐藏的人对别人不可见，对本人可见，主账�
 });
 
 test("小组榜：只列本组组员，不受隐藏影响；非组员报错", async () => {
-  const pg = await db({ migrate: [MIG] });
+  const pg = await db({ migrate: [MIG, "migrations_2026-11-28b_security_fix.sql"] });
   const a = await login(pg, "km01"), b = await login(pg, "pq01");
   await rpc(pg, "user_update_profile", { p_token: a, p_show_on_board: false });
   const g7 = (await one(pg, "select id from public.groups where name='G7'")).id;
@@ -65,7 +65,7 @@ test("小组榜：只列本组组员，不受隐藏影响；非组员报错", as
 });
 
 test("多个小组都有作业：today.hw 逐个列出；作业记录按经文包各一条", async () => {
-  const pg = await db({ migrate: [MIG] });
+  const pg = await db({ migrate: [MIG, "migrations_2026-11-28b_security_fix.sql"] });
   await pg.exec("update public.groups set hw_pack='约翰福音', hw_daily=3 where name='G7'; update public.groups set hw_pack='罗马书', hw_daily=2 where name='G8'");
   const t = await login(pg, "km01");
   await rpc(pg, "user_join_group", { p_token: t, p_code: (await one(pg, "select invite_code c from public.groups where name='G8'")).c });

@@ -24,6 +24,9 @@ async def main():
         await pg.click("#accTabUp"); await pg.wait_for_timeout(200)
         check(await pg.locator("#accForm .tip:visible").count() >= 2, "注册页有登录名、显示名的虚线框提示")
         check(await pg.locator("#accEmail").is_visible(), "注册页有邮箱（选填）")
+        await pg.fill("#accUser", "km12"); await pg.fill("#accName", "x"); await pg.fill("#accPw", "abcdef"); await pg.fill("#accPw2", "abcdef"); await pg.click("#accGo"); await pg.wait_for_timeout(300)
+        check("留给小组批量建的账号" in await pg.inner_text("#accMsg"), "注册时“两个字母＋数字”格式会被拦下")
+        await pg.fill("#accUser", ""); await pg.fill("#accName", ""); await pg.fill("#accPw", ""); await pg.fill("#accPw2", "")
         # 登录
         await pg.click("#accTabIn"); await pg.fill("#accUser", U); await pg.fill("#accPw", P)
         await pg.click("#accGo"); await logged_in(pg)
@@ -70,7 +73,9 @@ async def main():
         # 多小组作业：逐个显示
         await pg.evaluate("TD.hw=[{group:'G7',pack:'约翰福音',daily:2},{group:'G8',pack:'罗马书',daily:1}];show('home');renderHome()")
         await pg.wait_for_timeout(500)
-        check("G7" in (await pg.inner_text("#hwBar")), "首页作业条显示第一个小组的作业")
+        bar = await pg.inner_text("#hwBar")
+        check("G7" in bar and "G8" in bar, "首页作业条逐个列出每个小组的作业进度")
+        check(await pg.evaluate("hwStates().map(h=>h.raw).join('|')") == "约翰福音|罗马书", "作业上报用带领者设的原始包名")
         await pg.evaluate("TD.hw=[];renderHome()")
         check(errs == [], f"页面没有报错 {errs[:3]}")
         await b.close()

@@ -2,13 +2,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { db, rpc, one, withKey } from "./harness.mjs";
 const MIG = "migrations_2026-11-28_users_groups.sql";
-const login = async (pg, u, p = "123456") => (await rpc(pg, "user_login", { p_username: u, p_password: p })).token;
+const login = async (pg, u, p = "123456") => { const r = await rpc(pg, "user_login", { p_username: u, p_password: p }); if (r.error) throw new Error(r.error); return r.token; };
 const reg = async (pg, u) => (await rpc(pg, "user_register", { p_username: u, p_name: u, p_password: "abcdef" })).token;
 const idOf = async (pg, u) => Number((await one(pg, "select id from public.users where username=$1", [u])).id);
 
 // 两个带领者 A、B 各带一个小组；U 是普通用户；M 在 B 的小组里
 async function world() {
-  const pg = await db({ migrate: [MIG] });
+  const pg = await db({ migrate: [MIG, "migrations_2026-11-28b_security_fix.sql"] });
   const adm = await login(pg, "teacher");
   const A = await reg(pg, "zzleada"), B = await reg(pg, "zzleadb"), U = await reg(pg, "zzuser"), M = await reg(pg, "zzmember");
   await rpc(pg, "admin_set_leader", { p_token: adm, p_user: await idOf(pg, "zzleada"), p_on: true });
