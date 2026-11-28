@@ -139,6 +139,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .ch.typed{color:#b9851c}
 .ch.next{box-shadow:inset 0 -3px 0 var(--sun)}
 .ch.err{background:#ffe1da;color:var(--coral)}
+.mine{display:block;margin:8px auto 0;max-width:640px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.7);color:#6b5d50;font-size:14px;line-height:1.7;text-align:left;word-break:break-all}
 .ch.extra{color:#9a8f86;text-decoration:line-through;text-decoration-color:var(--coral);text-decoration-thickness:2px;background:#f1ebe4;border-radius:4px;padding:0 2px;font-size:.85em}
 .tablet .ch.extra{color:#8d7f72;-webkit-text-fill-color:#8d7f72}
 .ch.hintc{color:#8fb0c0;background:#e6f2f7}
@@ -1511,7 +1512,7 @@ function rDictate(){let tries=0;const ch=M.ch,idx=ch.map((c,i)=>i).filter(i=>isW
       $("#mVerse").innerHTML=ch.map((c,i)=>{const k=pos.get(i);if(k===undefined)return esc(c);return ex(k)+`<span class="ch ${hit[k]?"typed":"err"}">${esc(c)}</span>`}).join("")+ex(target.length);
       if(err===0){sfx.ok(10);burstEl($("#mVerse"),30);$("#mSay").innerHTML=EN()?"一词不差！":"一字不差！";$("#mArea").innerHTML="";setTimeout(goNext,1100);return}
       M.miss+=Math.min(err,4);sfx.bad();
-      $("#mSay").innerHTML=`有 <b>${err}</b> 处不对：${typed.length>len?`<span class="ch extra">划线</span>是多写的${EN()?"词":"字"}`:""}${typed.length>len&&target.length>len?"，":""}${target.length>len?`<span class="ch err">红色</span>是漏写或写错的${EN()?"词":"字"}`:""}。`;
+      $("#mSay").innerHTML=`有 <b>${err}</b> 处不对：${typed.length>len?`<span class="ch extra">划线</span>是多写的${EN()?"词":"字"}`:""}${typed.length>len&&target.length>len?"，":""}${target.length>len?`<span class="ch err">红色</span>是漏写或写错的${EN()?"词":"字"}`:""}。<span class="mine">你交的是：${esc(box.value.trim())}</span>`;
       $("#mArea").innerHTML=`<div class="acts"><button class="btn" id="mRetry">再默一遍</button><button class="chip" id="mGo">记住了，继续</button></div>`;
       $("#mRetry").onclick=ask;$("#mGo").onclick=goNext}};
   ask()}
