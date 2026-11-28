@@ -139,6 +139,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .ch.typed{color:#b9851c}
 .ch.next{box-shadow:inset 0 -3px 0 var(--sun)}
 .ch.err{background:#ffe1da;color:var(--coral)}
+.ch.extra{color:#9a8f86;text-decoration:line-through;text-decoration-color:var(--coral);text-decoration-thickness:2px;background:#f1ebe4;border-radius:4px;padding:0 2px;font-size:.85em}
+.tablet .ch.extra{color:#8d7f72;-webkit-text-fill-color:#8d7f72}
 .ch.hintc{color:#8fb0c0;background:#e6f2f7}
 .tile.ref2{cursor:default;background:#f4f9fb;border-color:var(--line);box-shadow:none;font-size:16px;transition:opacity .3s}
 .tile.ref2.used2{opacity:.25;text-decoration:line-through}
@@ -1493,8 +1495,10 @@ function makeErrs(ks,n){const out=[],used=new Set();
 /* 高阶：只看出处，默写整节；交卷后标出错字漏字 */
 function lcsHit(a,b){const n=a.length,m=b.length,dp=[];for(let i=0;i<=n;i++)dp.push(new Uint16Array(m+1));
   for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=a[i]===b[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
-  const hit=new Array(n).fill(false);let i=0,j=0;while(i<n&&j<m){if(a[i]===b[j]){hit[i]=true;i++;j++}else if(dp[i+1][j]>=dp[i][j+1])i++;else j++}
-  return {hit,len:dp[0][0]}}
+  const hit=new Array(n).fill(false),extra=Array.from({length:n+1},()=>[]);let i=0,j=0;
+  while(i<n&&j<m){if(a[i]===b[j]){hit[i]=true;i++;j++}else if(dp[i+1][j]>=dp[i][j+1])i++;else{extra[i].push(b[j]);j++}}
+  while(j<m){extra[n].push(b[j]);j++}
+  return {hit,len:dp[0][0],extra}}
 function rDictate(){let tries=0;const ch=M.ch,idx=ch.map((c,i)=>i).filter(i=>isW(ch[i])),target=idx.map(i=>nrm(ch[i])),pos=new Map(idx.map((i,k)=>[i,k]));
   const blank=()=>{$("#mVerse").innerHTML=`<span class="dict">凭记忆，把整节经文默写出来</span>`};
   const ask=()=>{blank();$("#mSay").innerHTML=tries?"再默写一遍。":`只看出处，默写整节经文。写完点“交卷”，标点${EN()?"、大小写":""}可以不管。`;
@@ -1502,11 +1506,12 @@ function rDictate(){let tries=0;const ch=M.ch,idx=ch.map((c,i)=>i).filter(i=>isW
     const box=$("#mType");try{box.focus({preventScroll:true})}catch(e){}
     $("#mPeek").onclick=()=>{M.miss+=2;$("#mVerse").innerHTML=`<span class="peekv">${esc(M.v.zh)}</span>`;setTimeout(()=>{if(!$("#mem").hidden&&$("#mType"))blank()},3000)};
     $("#mSubmit").onclick=()=>{const typed=units(box.value);if(!typed.length){box.focus();return}
-      const {hit,len}=lcsHit(target,typed),err=(target.length-len)+(typed.length-len);tries++;
-      $("#mVerse").innerHTML=ch.map((c,i)=>{const k=pos.get(i);if(k===undefined)return esc(c);return `<span class="ch ${hit[k]?"typed":"err"}">${esc(c)}</span>`}).join("");
+      const {hit,len,extra}=lcsHit(target,typed),err=(target.length-len)+(typed.length-len);tries++;
+      const ex=k=>extra[k]&&extra[k].length?`<span class="ch extra">${esc(extra[k].join(EN()?" ":""))}</span>`:"";
+      $("#mVerse").innerHTML=ch.map((c,i)=>{const k=pos.get(i);if(k===undefined)return esc(c);return ex(k)+`<span class="ch ${hit[k]?"typed":"err"}">${esc(c)}</span>`}).join("")+ex(target.length);
       if(err===0){sfx.ok(10);burstEl($("#mVerse"),30);$("#mSay").innerHTML=EN()?"一词不差！":"一字不差！";$("#mArea").innerHTML="";setTimeout(goNext,1100);return}
       M.miss+=Math.min(err,4);sfx.bad();
-      $("#mSay").innerHTML=`有 <b>${err}</b> 处写错或漏掉（红色是原文里没写对的${EN()?"词":"字"}）。`;
+      $("#mSay").innerHTML=`有 <b>${err}</b> 处不对：${typed.length>len?`<span class="ch extra">划线</span>是多写的${EN()?"词":"字"}`:""}${typed.length>len&&target.length>len?"，":""}${target.length>len?`<span class="ch err">红色</span>是漏写或写错的${EN()?"词":"字"}`:""}。`;
       $("#mArea").innerHTML=`<div class="acts"><button class="btn" id="mRetry">再默一遍</button><button class="chip" id="mGo">记住了，继续</button></div>`;
       $("#mRetry").onclick=ask;$("#mGo").onclick=goNext}};
   ask()}
