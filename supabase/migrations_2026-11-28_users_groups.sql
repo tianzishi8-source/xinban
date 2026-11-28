@@ -21,6 +21,8 @@ create temp table _mig_count on commit drop as
   union all select 'review_days', count(*) from public.review_days
   union all select 'hw_days', count(*) from public.hw_days
   union all select 'writings', count(*) from public.writings;
+create temp table _mig_members on commit drop as
+  select s.id uid, s.class_id gid from public.students s join public.classes c on c.id = s.class_id where not c.is_open and not c.hide_rank;
 create temp table _mig_stars on commit drop as
   select student_id uid, sum(stars + adv) s, count(*) c from public.progress group by 1;
 
@@ -800,4 +802,8 @@ begin
     raise exception 'VERIFY_FAILED: progress per user';
   end if;
   if (select count(*) from public.users where is_admin) <> 1 then raise exception 'VERIFY_FAILED: admin'; end if;
+  if exists (select uid, gid from _mig_members except select user_id, group_id from public.group_members)
+     or (select count(*) from public.group_members) <> (select count(*) from _mig_members) then
+    raise exception 'VERIFY_FAILED: group members';
+  end if;
 end $$;
